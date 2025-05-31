@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 from api import models
 import schemas
 
@@ -19,10 +20,13 @@ async def create_usuario(db: AsyncSession, usuario: schemas.UsuarioCreateRequest
 
 async def select_usuario(db: AsyncSession, usuario_id: int) -> models.Usuario | None:
     result = await db.execute(
-        select(models.Usuario).where(models.Usuario.id == usuario_id).options(
-            # Puedes cargar relaciones si lo necesitas, por ejemplo:
-            # selectinload(models.Usuario.rol),
-            # selectinload(models.Usuario.colecciones)
+        select(models.Usuario)
+        .where(models.Usuario.id == usuario_id)
+        .options(
+            selectinload(models.Usuario.rol),
+            selectinload(models.Usuario.reviews),
+            selectinload(models.Usuario.ratings),
+            selectinload(models.Usuario.colecciones)
         )
     )
     return result.scalar_one_or_none()
