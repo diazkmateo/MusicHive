@@ -1,8 +1,28 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from database import get_async_session
+from users.rating import dal
+from schemas import RatingCreateRequest, RatingResponse
+
+router = APIRouter(prefix="/rating", tags=["Rating"])
 
 
-router = APIRouter()
+@router.post("/", response_model=RatingResponse)
+async def crear_rating(
+    rating: RatingCreateRequest,
+    db: AsyncSession = Depends(get_async_session)
+):
+    nueva_rating = await dal.create_rating(db, rating)
+    return nueva_rating
 
-@router.get("/") # localhost:8000/rating
-async def rating():
-    return {"rating": "rating loco"}
+
+@router.get("/{rating_id}", response_model=RatingResponse)
+async def obtener_rating(
+    rating_id: int,
+    db: AsyncSession = Depends(get_async_session)
+):
+    rating = await dal.select_rating(db, rating_id)
+    if rating is None:
+        raise HTTPException(status_code=404, detail="Rating no encontrado")
+    return rating
