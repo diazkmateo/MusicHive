@@ -17,7 +17,6 @@ async def create_usuario(db: AsyncSession, usuario: schemas.UsuarioCreateRequest
     await db.refresh(nuevo_usuario)
     return nuevo_usuario
 
-
 async def select_usuario(db: AsyncSession, usuario_id: int) -> models.Usuario | None:
     result = await db.execute(
         select(models.Usuario)

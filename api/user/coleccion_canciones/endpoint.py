@@ -1,8 +1,28 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from database import get_async_session
+from users.coleccion_canciones import dal
+from schemas import ColeccionCancionesCreateRequest, ColeccionCancionesResponse
+
+router = APIRouter(prefix="/coleccion_canciones", tags=["ColeccionCanciones"])
 
 
-router = APIRouter()
+@router.post("/", response_model=ColeccionCancionesResponse)
+async def crear_coleccion_cancion(
+    item: ColeccionCancionesCreateRequest,
+    db: AsyncSession = Depends(get_async_session)
+):
+    nueva_asociacion = await dal.create_coleccion_cancion(db, item)
+    return nueva_asociacion
 
-@router.get("/") # localhost:8000/coleccion_canciones
-async def coleccion_canciones():
-    return {"coleccion_cancion": "coleccion_cancion loco"}
+
+@router.get("/{asociacion_id}", response_model=ColeccionCancionesResponse)
+async def obtener_coleccion_cancion(
+    asociacion_id: int,
+    db: AsyncSession = Depends(get_async_session)
+):
+    asociacion = await dal.select_coleccion_cancion(db, asociacion_id)
+    if asociacion is None:
+        raise HTTPException(status_code=404, detail="Asociación no encontrada")
+    return asociacion

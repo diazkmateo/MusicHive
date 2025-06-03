@@ -1,26 +1,24 @@
 from pydantic import BaseModel
 from typing import Optional
-from datetime import date
+
 
 # REQUEST
+class ReviewCreateRequest(BaseModel):
+    titulo_review: str  # máx. 100 si querés limitarlo
+    nota_review: int    # puede ser SmallInteger (0-255)
+    texto_review: Optional[str] = None
+    album_id: int
+    usuario_id: int
 
-class ColeccionCreateRequest(BaseModel):
-    id = int
-    titulo_review = str # Aclarar tamaño de str?
-    nota_review = int # smallint
-    texto_review = Optional[str] = None
-    album_id = int
-    usuario_id = int
 
 # RESPONSE
-
-class ColeccionResponse(BaseModel):
-    id = int
-    titulo_review = str # Aclarar tamaño de str?
-    nota_review = int # smallint
-    texto_review = Optional[str] = None
-    album_id = int
-    usuario_id = int
+class ReviewResponse(BaseModel):
+    id: int
+    titulo_review: str
+    nota_review: int
+    texto_review: Optional[str] = None
+    album_id: int
+    usuario_id: int
 
     class Config:
-        orm_mode = True  
+        orm_mode = True
