@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import get_async_session
-from users.coleccion_canciones import dal
+from database import get_db
+from coleccion_canciones import dal
 from schemas import ColeccionCancionesCreateRequest, ColeccionCancionesResponse
 
 router = APIRouter(prefix="/coleccion_canciones", tags=["ColeccionCanciones"])
@@ -11,7 +11,7 @@ router = APIRouter(prefix="/coleccion_canciones", tags=["ColeccionCanciones"])
 @router.post("/", response_model=ColeccionCancionesResponse)
 async def crear_coleccion_cancion(
     item: ColeccionCancionesCreateRequest,
-    db: AsyncSession = Depends(get_async_session)
+    db: AsyncSession = Depends(get_db)
 ):
     nueva_asociacion = await dal.create_coleccion_cancion(db, item)
     return nueva_asociacion
@@ -20,7 +20,7 @@ async def crear_coleccion_cancion(
 @router.get("/{asociacion_id}", response_model=ColeccionCancionesResponse)
 async def obtener_coleccion_cancion(
     asociacion_id: int,
-    db: AsyncSession = Depends(get_async_session)
+    db: AsyncSession = Depends(get_db)
 ):
     asociacion = await dal.select_coleccion_cancion(db, asociacion_id)
     if asociacion is None:

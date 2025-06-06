@@ -7,8 +7,8 @@ from datetime import date
 class AlbumCreateRequest(BaseModel):
     id = int
     nombre_album = str
-    fecha_salida_album = date # Column(Date, nullable=True)
-    genero_id = int
+    fecha_salida_album = Optional[date] # Column(Date, nullable=True)
+    genero_id = Optional[int]
     artista_id = int
 
 # RESPONSE
