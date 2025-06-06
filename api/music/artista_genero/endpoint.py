@@ -1,8 +1,29 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from database import get_db
+from . import dal # TABLA INTERMEDIA: Crear dal?
+import schemas
 
 
-router = APIRouter()
+router = APIRouter(prefix="/artista_genero", tags=["ArtistaGenero"])
 
-@router.get("/") # localhost:8000/artista_genero
-async def artista_genero():
-    return {"artista_genero": "artista_genero loco"}
+
+@router.post("/", response_model=schemas.ArtistaGeneroCreateRequest)
+async def crear_artista_genero(
+    artista_genero: schemas.ArtistaGeneroCreateRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    nuevo_artista_genero = await dal.create_artista_genero(db, artista_genero)
+    return nuevo_artista_genero
+
+
+@router.get("/{artista_genero_id}", response_model=schemas.ArtistaGeneroResponse)
+async def obtener_artista_genero(
+    artista_genero_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    artista_genero = await dal.select_artista_genero(db, artista_genero_id)
+    if artista_genero is None:
+        raise HTTPException(status_code=404, detail="ArtistaGenero no encontrado")
+    return artista_genero

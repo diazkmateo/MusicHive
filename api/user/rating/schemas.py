@@ -4,7 +4,7 @@ from datetime import date
 
 # REQUEST
 
-class ColeccionCreateRequest(BaseModel):
+class RatingRequest(BaseModel):
     id = int
     puntuacion = int
     fecha_creacion = date
@@ -13,7 +13,7 @@ class ColeccionCreateRequest(BaseModel):
 
 # RESPONSE
 
-class ColeccionResponse(BaseModel):
+class RatingResponse(BaseModel):
     id = int
     puntuacion = int
     fecha_creacion = date
