@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
-from coleccion_canciones import dal
-from schemas import ColeccionCancionesCreateRequest, ColeccionCancionesResponse
+from user.coleccion_canciones import dal
+from user.coleccion_canciones.schemas import ColeccionCancionesCreateRequest, ColeccionCancionesResponse
 
 router = APIRouter(prefix="/coleccion_canciones", tags=["ColeccionCanciones"])
 

@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
-from api import models
-import schemas
+import models
+from music.genero import schemas
 
 async def create_genero(db: AsyncSession, genero: schemas.GeneroCreateRequest) -> models.Genero:
     nuevo_genero = models.Genero(

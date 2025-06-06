@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from api import models
-import schemas
+import models
+from user.review import schemas
 
 async def create_review(db: AsyncSession, review: schemas.ReviewCreateRequest) -> models.Review:
     nueva_review = models.Review(

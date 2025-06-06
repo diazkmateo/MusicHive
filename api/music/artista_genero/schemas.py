@@ -5,8 +5,8 @@ from datetime import date
 # REQUEST
 
 class Artista_GeneroCreateRequest(BaseModel):
-    artista_id = int
-    genero_id = int
+    artista_id: int
+    genero_id: int
 
 # RESPONSE
 

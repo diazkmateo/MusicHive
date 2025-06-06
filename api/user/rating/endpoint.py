@@ -3,14 +3,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
 from . import dal
-from schemas import RatingRequest, RatingResponse
+from user.rating.schemas import RatingCreateRequest, RatingResponse
 
 router = APIRouter(prefix="/rating", tags=["Rating"])
 
 
-@router.post("/", response_model=RatingRequest)
+@router.post("/", response_model=RatingCreateRequest)
 async def crear_rating(
-    rating: RatingRequest,
+    rating: RatingCreateRequest,
     db: AsyncSession = Depends(get_db)
 ):
     nueva_rating = await dal.create_rating(db, rating)

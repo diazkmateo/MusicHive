@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
 from . import dal
-from schemas import ColeccionCreateRequest, ColeccionResponse
+from user.coleccion.schemas import ColeccionCreateRequest, ColeccionResponse
 
 router = APIRouter(prefix="/coleccion", tags=["Coleccion"]) # El atributo tag aparece en /docs
 

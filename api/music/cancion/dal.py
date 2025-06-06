@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
-from api import models
-import schemas
+import models
+from music.cancion import schemas
 
 async def create_cancion(db: AsyncSession, Cancion: schemas.CancionCreateRequest) -> models.Cancion:
     nuevo_Cancion = models.Cancion(

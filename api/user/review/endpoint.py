@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
 from . import dal
-from schemas import ReviewCreateRequest, ReviewResponse
+from user.review.schemas import ReviewCreateRequest, ReviewResponse
 
 router = APIRouter(prefix="/review", tags=["Review"])
 

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
 from . import dal
-import schemas
+from user.rol import schemas
 
 router = APIRouter(prefix="/rol", tags=["Rol"])
 

@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
 from . import dal
-import schemas
+from music.genero import schemas
 
 router = APIRouter(prefix="/genero", tags=["Genero"])
 
