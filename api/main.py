@@ -1,4 +1,8 @@
-from fastapi import FastAPI
+import os
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 
 import user.usuario.endpoint
 import user.rol.endpoint
@@ -16,17 +20,28 @@ import music.cancion.endpoint
 
 app = FastAPI()
 
-prefix_base = "/api/v1"
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+templates_dir = os.path.join(project_root, "templates")
 
-app.include_router(user.usuario.endpoint.router, prefix=f"{prefix_base}/usuario")
-app.include_router(user.rol.endpoint.router, prefix=f"{prefix_base}/rol")
-app.include_router(user.rating.endpoint.router, prefix=f"{prefix_base}/rating")
-app.include_router(user.review.endpoint.router, prefix=f"{prefix_base}/review")
-app.include_router(user.coleccion.endpoint.router, prefix=f"{prefix_base}/coleccion")
-app.include_router(user.coleccion_canciones.endpoint.router, prefix=f"{prefix_base}/coleccion_canciones")
+app.mount("/templates", StaticFiles(directory=templates_dir), name="templates")
+templates = Jinja2Templates(directory=templates_dir)
 
-app.include_router(music.album.endpoint.router, prefix=f"{prefix_base}/album")
-app.include_router(music.genero.endpoint.router, prefix=f"{prefix_base}/genero")
-app.include_router(music.artista.endpoint.router, prefix=f"{prefix_base}/artista")
-app.include_router(music.artista_genero.endpoint.router, prefix=f"{prefix_base}/artista_genero")
-app.include_router(music.cancion.endpoint.router, prefix=f"{prefix_base}/cancion")
+
+
+@app.get("/", response_class=HTMLResponse)
+async def read_root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+app.include_router(user.usuario.endpoint.router)
+app.include_router(user.rol.endpoint.router)
+app.include_router(user.rating.endpoint.router)
+app.include_router(user.review.endpoint.router)
+app.include_router(user.coleccion.endpoint.router)
+app.include_router(user.coleccion_canciones.endpoint.router)
+
+app.include_router(music.album.endpoint.router)
+app.include_router(music.genero.endpoint.router)
+app.include_router(music.artista.endpoint.router)
+app.include_router(music.artista_genero.endpoint.router)
+app.include_router(music.cancion.endpoint.router)

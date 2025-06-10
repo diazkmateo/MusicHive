@@ -19,6 +19,7 @@ class Album(Base):
     
     reviews = relationship("Review", back_populates="album")
     ratings = relationship("Rating", back_populates="album")
+    # canciones = relationship("Cancion", back_populates="album")
 
     def __repr__(self):
         return f"<Album(id={self.id}, nombre_album='{self.nombre_album}')>"
@@ -69,6 +70,8 @@ class Cancion(Base):
     numero_pista = Column(SmallInteger, nullable=False, name="numero_pista")
 
     album_id = Column(Integer, ForeignKey("album.id_album"), nullable=False)
+
+    # album = relationship("Album", back_populates="canciones")
 
     def __repr__(self):
         return f"<Cancion(id={self.id}, nombre_cancion='{self.nombre_cancion}', duracion_segundos={self.duracion_segundos})>"

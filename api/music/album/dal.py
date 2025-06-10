@@ -6,10 +6,10 @@ from music.album import schemas
 
 async def create_album(db: AsyncSession, album: schemas.AlbumCreateRequest) -> models.Album:
     nuevo_album = models.Album(
-        nombre_album=album.nombre_album,
-        fecha_salida_album=album.fecha_salida_album,
-        genero_id=album.genero_id,
-        artista_id=album.artista_id
+        nombre_album = album.nombre_album,
+        fecha_salida_album = album.fecha_salida_album,
+        genero_id = album.genero_id,
+        artista_id = album.artista_id
     )
     db.add(nuevo_album)
     await db.commit()
