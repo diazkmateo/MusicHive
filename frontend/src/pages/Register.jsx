@@ -39,10 +39,21 @@ function Register() {
       });
 
       // Iniciar sesión automáticamente después del registro
-      await login(formData.email, formData.password);
-      navigate('/');
+      const loginResult = await login(formData.email, formData.password);
+      if (loginResult.success) {
+        navigate('/');
+      } else {
+        setError(loginResult.error);
+      }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Error al registrar usuario');
+      const errorMessage = err.response?.data?.detail || 'Error al registrar usuario';
+      if (errorMessage.includes('UNIQUE constraint failed: usuario.email')) {
+        setError('Este correo electrónico ya está registrado');
+      } else if (errorMessage.includes('UNIQUE constraint failed: usuario.nombre_usuario')) {
+        setError('Este nombre de usuario ya está en uso');
+      } else {
+        setError(errorMessage);
+      }
     }
   };
 

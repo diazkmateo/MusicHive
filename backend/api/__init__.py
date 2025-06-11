@@ -1,0 +1,3 @@
+"""
+MusicHive API Package
+"""

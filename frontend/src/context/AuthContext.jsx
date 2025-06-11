@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { userService } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -15,22 +16,22 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // Verificar si hay un token guardado
     const token = localStorage.getItem('token');
+    
     if (token) {
       // Verificar el token con el backend
-      axios.get('http://localhost:3001/api/auth/verify', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      .then(response => {
-        setUser(response.data.user);
-        setIsAuthenticated(true);
-      })
-      .catch(() => {
-        localStorage.removeItem('token');
-        setIsAuthenticated(false);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+      userService.getProfile()
+        .then(response => {
+          setUser(response.data);
+          setIsAuthenticated(true);
+        })
+        .catch(() => {
+          // Si el token expiró, limpiar todo
+          localStorage.removeItem('token');
+          setIsAuthenticated(false);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     } else {
       setLoading(false);
       setIsAuthenticated(false);
@@ -39,10 +40,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/login', {
-        email,
-        password
-      });
+      const response = await userService.login({ email, password });
       const { token, user } = response.data;
       localStorage.setItem('token', token);
       setUser(user);
@@ -51,23 +49,19 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return { 
         success: false, 
-        error: error.response?.data?.message || 'Error al iniciar sesión' 
+        error: error.response?.data?.detail || 'Error al iniciar sesión' 
       };
     }
   };
 
   const register = async (userData) => {
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/register', userData);
-      const { token, user } = response.data;
-      localStorage.setItem('token', token);
-      setUser(user);
-      setIsAuthenticated(true);
+      await userService.register(userData);
       return { success: true };
     } catch (error) {
       return { 
         success: false, 
-        error: error.response?.data?.message || 'Error al registrarse' 
+        error: error.response?.data?.detail || 'Error al registrarse' 
       };
     }
   };
@@ -78,13 +72,32 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
   };
 
+  const changePassword = async (currentPassword, newPassword) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post('http://localhost:3001/api/auth/change-password', {
+        current_password: currentPassword,
+        new_password: newPassword
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.detail || 'Error al cambiar la contraseña'
+      };
+    }
+  };
+
   const value = {
     user,
     loading,
     isAuthenticated,
     login,
     register,
-    logout
+    logout,
+    changePassword
   };
 
   return (

@@ -1,32 +1,46 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from user.usuario.endpoint import router as usuario_router
+from user.rol.endpoint import router as rol_router
+from user.rating.endpoint import router as rating_router
+from user.review.endpoint import router as review_router
+from user.coleccion.endpoint import router as coleccion_router
+from user.coleccion_canciones.endpoint import router as coleccion_canciones_router
 
-import user.usuario.endpoint
-import user.rol.endpoint
-import user.rating.endpoint
-import user.review.endpoint
-import user.coleccion.endpoint
-import user.coleccion_canciones.endpoint
+from music.album.endpoint import router as album_router
+from music.genero.endpoint import router as genero_router
+from music.artista.endpoint import router as artista_router
+from music.artista_genero.endpoint import router as artista_genero_router
+from music.cancion.endpoint import router as cancion_router
 
-import music.album.endpoint
-import music.genero.endpoint
-import music.artista.endpoint
-import music.artista_genero.endpoint
-import music.cancion.endpoint
+from core.rate_limit import rate_limit_middleware
 
+app = FastAPI(title="MusicHive API")
 
-app = FastAPI()
+# Configuración de CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # En producción, especificar los orígenes permitidos
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-prefix_base = "/api/v1"
+# Incluir routers de usuario
+app.include_router(usuario_router)
+app.include_router(rol_router)
+app.include_router(rating_router)
+app.include_router(review_router)
+app.include_router(coleccion_router)
+app.include_router(coleccion_canciones_router)
 
-app.include_router(user.usuario.endpoint.router, prefix=f"{prefix_base}/usuario")
-app.include_router(user.rol.endpoint.router, prefix=f"{prefix_base}/rol")
-app.include_router(user.rating.endpoint.router, prefix=f"{prefix_base}/rating")
-app.include_router(user.review.endpoint.router, prefix=f"{prefix_base}/review")
-app.include_router(user.coleccion.endpoint.router, prefix=f"{prefix_base}/coleccion")
-app.include_router(user.coleccion_canciones.endpoint.router, prefix=f"{prefix_base}/coleccion_canciones")
+# Incluir routers de música
+app.include_router(album_router)
+app.include_router(genero_router)
+app.include_router(artista_router)
+app.include_router(artista_genero_router)
+app.include_router(cancion_router)
 
-app.include_router(music.album.endpoint.router, prefix=f"{prefix_base}/album")
-app.include_router(music.genero.endpoint.router, prefix=f"{prefix_base}/genero")
-app.include_router(music.artista.endpoint.router, prefix=f"{prefix_base}/artista")
-app.include_router(music.artista_genero.endpoint.router, prefix=f"{prefix_base}/artista_genero")
-app.include_router(music.cancion.endpoint.router, prefix=f"{prefix_base}/cancion")
+@app.get("/")
+async def root():
+    return {"message": "Bienvenido a la API de MusicHive"}

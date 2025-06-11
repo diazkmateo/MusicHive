@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, ForeignKey, Text, SmallInteger
+from sqlalchemy import Boolean, Column, Integer, String, Date, ForeignKey, Text, SmallInteger, Table, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
@@ -12,6 +12,11 @@ class Album(Base):
     fecha_salida_album = Column(Date, nullable=True)
     genero_id = Column(Integer, ForeignKey("genero.id_genero"), nullable=True)
     artista_id = Column(Integer, ForeignKey("artista.id_artista"), nullable=False)
+    titulo = Column(String, index=True)
+    fecha_lanzamiento = Column(DateTime)
+    portada_url = Column(String)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     genero = relationship("Genero", back_populates="albums")
     artista = relationship("Artista", back_populates="albums")
@@ -30,9 +35,14 @@ class Artista(Base):
     nombre_artista = Column(String(50), nullable=False, unique=True)
     fecha_formacion = Column(Date, nullable=True)
     pais_origen = Column(String(20), nullable=True)
+    biografia = Column(Text)
+    imagen_url = Column(String)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     albums = relationship("Album", back_populates="artista", cascade="all, delete-orphan")
     generos_asociados = relationship("ArtistaGenero", back_populates="artista", cascade="all, delete-orphan")
+    canciones = relationship("Cancion", back_populates="artista")
 
     def __repr__(self):
         return f"<Artista(id={self.id}, nombre_artista='{self.nombre_artista}')>"
@@ -53,6 +63,9 @@ class Genero(Base):
 
     id = Column(Integer, primary_key=True, index=True, name="id_genero")
     nombre_genero = Column(String(50), nullable=False, unique=True)
+    descripcion = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     albums = relationship("Album", back_populates="genero")
     artistas_asociados = relationship("ArtistaGenero", back_populates="genero", cascade="all, delete-orphan")
@@ -67,8 +80,17 @@ class Cancion(Base):
     nombre_cancion = Column(String(50), nullable=False, unique=False)
     duracion_segundos = Column(Integer, nullable=False, name="duracion_segundos")
     numero_pista = Column(SmallInteger, nullable=False, name="numero_pista")
+    titulo = Column(String, index=True)
+    archivo_url = Column(String)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     album_id = Column(Integer, ForeignKey("album.id_album"), nullable=False)
+    artista_id = Column(Integer, ForeignKey("artista.id_artista"), nullable=False)
+
+    album = relationship("Album", back_populates="canciones")
+    artista = relationship("Artista", back_populates="canciones")
+    colecciones_asociadas = relationship("ColeccionCanciones", back_populates="cancion")
 
     def __repr__(self):
         return f"<Cancion(id={self.id}, nombre_cancion='{self.nombre_cancion}', duracion_segundos={self.duracion_segundos})>"

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000/api/v1';
+const API_URL = 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -20,10 +20,18 @@ api.interceptors.request.use((config) => {
 
 // Servicios de Usuario
 export const userService = {
-  register: (userData) => api.post('/usuario', userData),
-  login: (credentials) => api.post('/auth/login', credentials),
-  getProfile: (userId) => api.get(`/usuario/${userId}`),
-  updateProfile: (userId, userData) => api.put(`/usuario/${userId}`, userData),
+  register: (userData) => api.post('/usuario', {
+    nombre_usuario: userData.username,
+    password: userData.password,
+    email: userData.email,
+    rol_id: 1  // Por defecto, asignamos el rol de usuario normal
+  }),
+  login: (credentials) => api.post('/usuario/login', {
+    email: credentials.email,
+    password: credentials.password
+  }),
+  getProfile: () => api.get('/usuario/perfil'),
+  updateProfile: (userData) => api.put('/usuario/perfil', userData),
 };
 
 // Servicios de Música

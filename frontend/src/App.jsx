@@ -19,13 +19,13 @@ function App() {
   return (
     <AppProvider>
       <div className="flex flex-col min-h-screen">
-        <Navbar />
-        <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<Home />} />
+      <Navbar />
+      <main className="flex-grow">
+        <Routes>
+          <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/about" element={<About />} />
+          <Route path="/about" element={<About />} />
             {/* Rutas protegidas */}
             <Route
               path="/profile"
@@ -75,10 +75,10 @@ function App() {
                 </PrivateRoute>
               }
             />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
+        </Routes>
+      </main>
+      <Footer />
+    </div>
     </AppProvider>
   );
 }
