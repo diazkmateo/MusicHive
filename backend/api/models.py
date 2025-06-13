@@ -10,18 +10,12 @@ class Album(Base):
     id = Column(Integer, primary_key=True, index=True, name="id_album")
     nombre_album = Column(String(50), nullable=False)
     fecha_salida_album = Column(Date, nullable=True)
-    genero_id = Column(Integer, ForeignKey("genero.id_genero"), nullable=True)
     artista_id = Column(Integer, ForeignKey("artista.id_artista"), nullable=False)
-    titulo = Column(String, index=True)
-    fecha_lanzamiento = Column(DateTime)
-    portada_url = Column(String)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    genero_id = Column(Integer, ForeignKey("genero.id_genero"), nullable=True)
 
-    genero = relationship("Genero", back_populates="albums")
     artista = relationship("Artista", back_populates="albums")
+    genero = relationship("Genero", back_populates="albums")
     canciones = relationship("Cancion", back_populates="album", cascade="all, delete-orphan")
-    
     reviews = relationship("Review", back_populates="album")
     ratings = relationship("Rating", back_populates="album")
 
@@ -34,21 +28,18 @@ class Artista(Base):
     id = Column(Integer, primary_key=True, index=True, name="id_artista")
     nombre_artista = Column(String(50), nullable=False, unique=True)
     fecha_formacion = Column(Date, nullable=True)
-    pais_origen = Column(String(20), nullable=True)
-    biografia = Column(Text)
-    imagen_url = Column(String)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    pais_origen = Column(String(50), nullable=True)
 
     albums = relationship("Album", back_populates="artista", cascade="all, delete-orphan")
     generos_asociados = relationship("ArtistaGenero", back_populates="artista", cascade="all, delete-orphan")
-    canciones = relationship("Cancion", back_populates="artista")
+    canciones = relationship("Cancion", back_populates="artista", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Artista(id={self.id}, nombre_artista='{self.nombre_artista}')>"
     
 class ArtistaGenero(Base):
     __tablename__ = "artista_genero"
+    
     artista_id = Column(Integer, ForeignKey("artista.id_artista"), primary_key=True)
     genero_id = Column(Integer, ForeignKey("genero.id_genero"), primary_key=True)
 
@@ -63,9 +54,6 @@ class Genero(Base):
 
     id = Column(Integer, primary_key=True, index=True, name="id_genero")
     nombre_genero = Column(String(50), nullable=False, unique=True)
-    descripcion = Column(Text)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     albums = relationship("Album", back_populates="genero")
     artistas_asociados = relationship("ArtistaGenero", back_populates="genero", cascade="all, delete-orphan")
@@ -77,14 +65,9 @@ class Cancion(Base):
     __tablename__ = "cancion"
 
     id = Column(Integer, primary_key=True, index=True, name="id_cancion")
-    nombre_cancion = Column(String(50), nullable=False, unique=False)
-    duracion_segundos = Column(Integer, nullable=False, name="duracion_segundos")
-    numero_pista = Column(SmallInteger, nullable=False, name="numero_pista")
-    titulo = Column(String, index=True)
-    archivo_url = Column(String)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
+    nombre_cancion = Column(String(50), nullable=False)
+    duracion_segundos = Column(Integer, nullable=False)
+    numero_pista = Column(SmallInteger, nullable=False)
     album_id = Column(Integer, ForeignKey("album.id_album"), nullable=False)
     artista_id = Column(Integer, ForeignKey("artista.id_artista"), nullable=False)
 
@@ -93,18 +76,44 @@ class Cancion(Base):
     colecciones_asociadas = relationship("ColeccionCanciones", back_populates="cancion")
 
     def __repr__(self):
-        return f"<Cancion(id={self.id}, nombre_cancion='{self.nombre_cancion}', duracion_segundos={self.duracion_segundos})>"
-
-
+        return f"<Cancion(id={self.id}, nombre_cancion='{self.nombre_cancion}')>"
 
 ### user models
+class Rol(Base):
+    __tablename__ = "rol"
+
+    id = Column(SmallInteger, primary_key=True, index=True, name="id_rol")
+    nombre_rol = Column(String(50), unique=True, nullable=False)
+
+    usuarios = relationship("Usuario", back_populates="rol")
+
+    def __repr__(self):
+        return f"<Rol(id={self.id}, nombre_rol='{self.nombre_rol}')>"
+    
+class Usuario(Base):
+    __tablename__ = "usuario"
+
+    id = Column(Integer, primary_key=True, index=True, name="id_usuario")
+    nombre_usuario = Column(String(20), nullable=False, unique=True)
+    contrasena_usuario = Column(String(20), nullable=False)
+    email = Column(String(50), unique=True, nullable=False)
+    rol_id = Column(SmallInteger, ForeignKey("rol.id_rol"), nullable=False)
+
+    rol = relationship("Rol", back_populates="usuarios")
+    reviews = relationship("Review", back_populates="usuario", cascade="all, delete-orphan")
+    ratings = relationship("Rating", back_populates="usuario", cascade="all, delete-orphan")
+    colecciones = relationship("Coleccion", back_populates="usuario", cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f"<Usuario(id={self.id}, nombre_usuario='{self.nombre_usuario}')>"
+
 class Coleccion(Base):
     __tablename__ = "coleccion"
 
     id = Column(Integer, primary_key=True, index=True, name="id_coleccion")
     nombre_coleccion = Column(String(50), nullable=False)
     descripcion = Column(Text, nullable=True)
-    usuario_id = Column(Integer, ForeignKey("usuario.id_usuario"), nullable=False, name="id_usuario")
+    usuario_id = Column(Integer, ForeignKey("usuario.id_usuario"), nullable=False)
 
     usuario = relationship("Usuario", back_populates="colecciones")
     canciones_asociadas = relationship("ColeccionCanciones", back_populates="coleccion", cascade="all, delete-orphan")
@@ -115,16 +124,15 @@ class Coleccion(Base):
 class ColeccionCanciones(Base):
     __tablename__ = "coleccion_canciones"
 
-    id = Column(Integer, primary_key=True, index=True, name="id_coleccion_canciones")
-    coleccion_id = Column(Integer, ForeignKey("coleccion.id_coleccion"), nullable=False)
-    cancion_id = Column(Integer, ForeignKey("cancion.id_cancion"), nullable=False)
-    fecha_anadido = Column(Date, nullable=False, default=func.current_date(), name="fecha_añadido")
+    coleccion_id = Column(Integer, ForeignKey("coleccion.id_coleccion"), primary_key=True)
+    cancion_id = Column(Integer, ForeignKey("cancion.id_cancion"), primary_key=True)
+    fecha_anadido = Column(Date, nullable=False, default=func.current_date())
 
     coleccion = relationship("Coleccion", back_populates="canciones_asociadas")
     cancion = relationship("Cancion", back_populates="colecciones_asociadas")
 
     def __repr__(self):
-        return f"<ColeccionCanciones(id={self.id}, coleccion_id={self.coleccion_id}, cancion_id={self.cancion_id})>"
+        return f"<ColeccionCanciones(coleccion_id={self.coleccion_id}, cancion_id={self.cancion_id})>"
     
 class Rating(Base):
     __tablename__ = "rating"
@@ -156,31 +164,3 @@ class Review(Base):
 
     def __repr__(self):
         return f"<Review(id={self.id}, titulo_review='{self.titulo_review}')>"
-    
-class Rol(Base):
-    __tablename__ = "rol"
-
-    id = Column(SmallInteger, primary_key=True, index=True, name="id_rol")
-    nombre_rol = Column(String(50), unique=True, nullable=False)
-
-    usuarios = relationship("Usuario", back_populates="rol")
-    def __repr__(self):
-        return f"<Rol(id={self.id}, nombre_rol='{self.nombre_rol}')>"
-    
-class Usuario(Base):
-    __tablename__ = "usuario"
-
-    id = Column(Integer, primary_key=True, index=True, name="id_usuario")
-    nombre_usuario = Column(String(20), nullable=False, unique=True)
-    contrasena_hash = Column(String, nullable=False, name="contrasena_usuario")
-    email = Column(String(50), unique=True, index=True, nullable=False)
-    rol_id = Column(SmallInteger, ForeignKey("rol.id_rol"), nullable=False)
-
-    rol = relationship("Rol", back_populates="usuarios")
-        
-    reviews = relationship("Review", back_populates="usuario", cascade="all, delete-orphan")
-    ratings = relationship("Rating", back_populates="usuario", cascade="all, delete-orphan")
-    colecciones = relationship("Coleccion", back_populates="usuario", cascade="all, delete-orphan")
-
-    def __repr__(self):
-        return f"<Usuario(id={self.id}, nombre_usuario='{self.nombre_usuario}')>"

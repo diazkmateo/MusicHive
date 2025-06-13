@@ -5,7 +5,7 @@ from database import get_db
 from . import dal
 from music.cancion import schemas
 
-router = APIRouter(prefix="/cancion", tags=["Cancion"])
+router = APIRouter(prefix="/canciones", tags=["Cancion"])
 
 
 @router.post("/", response_model=schemas.CancionCreateRequest)

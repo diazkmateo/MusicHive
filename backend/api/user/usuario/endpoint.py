@@ -73,7 +73,7 @@ async def login(
                 detail="Credenciales inválidas"
             )
         
-        if not verify_password(credentials.password, usuario.contrasena_hash):
+        if not verify_password(credentials.password, usuario.contrasena_usuario):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Credenciales inválidas"

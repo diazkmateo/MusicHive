@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { userService } from '../services/api';
+import { userService } from '../services/userService';
 
 const AuthContext = createContext(null);
 
@@ -36,8 +36,10 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
+      console.log('Intentando login con:', { email });
       const response = await userService.login({ email, password });
-      const { token, user: userData } = response.data;
+      console.log('Respuesta del login:', response);
+      const { token, user: userData } = response;
       
       if (!token) {
         throw new Error('No se recibió el token de acceso');

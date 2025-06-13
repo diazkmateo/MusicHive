@@ -1,256 +1,263 @@
-import { useState } from 'react';
-import { useApp } from '../context/AppContext';
-import { collectionService } from '../services/api';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { musicService } from '../services/musicService';
 
-function Collections() {
-  const { collections, songs, loading, addCollection, updateCollection, deleteCollection } = useApp();
+export default function Collections() {
+  const { user } = useAuth();
+  const [collections, setCollections] = useState([]);
+  const [songs, setSongs] = useState([]);
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    songs: [],
+    nombre_coleccion: '',
+    descripcion: '',
+    canciones_seleccionadas: []
   });
-  const [editingId, setEditingId] = useState(null);
-  const [formError, setFormError] = useState('');
+  const [editing, setEditing] = useState(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      loadCollections();
+      loadSongs();
+    }
+  }, [user]);
+
+  const loadCollections = async () => {
+    try {
+      const data = await musicService.getCollections();
+      setCollections(data);
+    } catch (err) {
+      setError('Error al cargar las colecciones');
+    }
+  };
+
+  const loadSongs = async () => {
+    try {
+      const data = await musicService.getSongs();
+      setSongs(data);
+    } catch (err) {
+      setError('Error al cargar las canciones');
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: value
     }));
   };
 
-  const handleSongChange = (e) => {
-    const selectedSongs = Array.from(e.target.selectedOptions, (option) => option.value);
-    setFormData((prev) => ({
+  const handleSongSelection = (songId) => {
+    setFormData(prev => ({
       ...prev,
-      songs: selectedSongs,
+      canciones_seleccionadas: prev.canciones_seleccionadas.includes(songId)
+        ? prev.canciones_seleccionadas.filter(id => id !== songId)
+        : [...prev.canciones_seleccionadas, songId]
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setFormError('');
+    setLoading(true);
+    setError('');
 
     try {
-      if (editingId) {
-        const response = await collectionService.updateCollection(editingId, formData);
-        updateCollection(response.data);
-        setEditingId(null);
+      if (editing) {
+        await musicService.updateCollection(editing, formData);
       } else {
-        const response = await collectionService.createCollection(formData);
-        addCollection(response.data);
+        await musicService.createCollection(formData);
       }
-
-      setFormData({
-        name: '',
-        description: '',
-        songs: [],
-      });
+      await loadCollections();
+      resetForm();
     } catch (err) {
-      setFormError(err.response?.data?.detail || 'Error al guardar la colección');
+      setError(err.response?.data?.detail || 'Error al guardar la colección');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleEdit = (collection) => {
-    setEditingId(collection.id);
+    setEditing(collection.id_coleccion);
     setFormData({
-      name: collection.name,
-      description: collection.description,
-      songs: collection.songs.map((song) => song.id),
+      nombre_coleccion: collection.nombre_coleccion,
+      descripcion: collection.descripcion || '',
+      canciones_seleccionadas: collection.canciones_asociadas?.map(c => c.cancion_id) || []
     });
   };
 
   const handleDelete = async (id) => {
+    if (!window.confirm('¿Estás seguro de que quieres eliminar esta colección?')) return;
+    
     try {
-      await collectionService.deleteCollection(id);
-      deleteCollection(id);
+      await musicService.deleteCollection(id);
+      await loadCollections();
     } catch (err) {
-      setFormError('Error al eliminar la colección');
+      setError('Error al eliminar la colección');
     }
   };
 
-  if (loading) {
+  const resetForm = () => {
+    setFormData({
+      nombre_coleccion: '',
+      descripcion: '',
+      canciones_seleccionadas: []
+    });
+    setEditing(null);
+  };
+
+  if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8">Gestión de Colecciones</h1>
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
+          Debes iniciar sesión para gestionar tus colecciones.
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="md:grid md:grid-cols-3 md:gap-6">
-          <div className="md:col-span-1">
-            <div className="px-4 sm:px-0">
-              <h3 className="text-lg font-medium leading-6 text-gray-900">
-                Colecciones
-              </h3>
-              <p className="mt-1 text-sm text-gray-600">
-                Administra tus colecciones de música.
-              </p>
-            </div>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">Gestión de Colecciones</h1>
+      
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="mb-8 bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-xl font-semibold mb-4">
+          {editing ? 'Editar Colección' : 'Nueva Colección'}
+        </h2>
+        
+        <div className="grid grid-cols-1 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nombre de la Colección *
+            </label>
+            <input
+              type="text"
+              name="nombre_coleccion"
+              value={formData.nombre_coleccion}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border rounded-md"
+            />
           </div>
 
-          <div className="mt-5 md:mt-0 md:col-span-2">
-            <form onSubmit={handleSubmit}>
-              <div className="shadow sm:rounded-md sm:overflow-hidden">
-                <div className="px-4 py-5 bg-white space-y-6 sm:p-6">
-                  {formError && (
-                    <div className="rounded-md bg-red-50 p-4">
-                      <div className="text-sm text-red-700">{formError}</div>
-                    </div>
-                  )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Descripción
+            </label>
+            <textarea
+              name="descripcion"
+              value={formData.descripcion}
+              onChange={handleChange}
+              rows="4"
+              className="w-full px-3 py-2 border rounded-md"
+            />
+          </div>
 
-                  <div className="grid grid-cols-6 gap-6">
-                    <div className="col-span-6 sm:col-span-3">
-                      <label
-                        htmlFor="name"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Nombre
-                      </label>
-                      <input
-                        type="text"
-                        name="name"
-                        id="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
-                        className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                      />
-                    </div>
-
-                    <div className="col-span-6">
-                      <label
-                        htmlFor="description"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Descripción
-                      </label>
-                      <textarea
-                        name="description"
-                        id="description"
-                        rows={3}
-                        value={formData.description}
-                        onChange={handleChange}
-                        required
-                        className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                      />
-                    </div>
-
-                    <div className="col-span-6">
-                      <label
-                        htmlFor="songs"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Canciones
-                      </label>
-                      <select
-                        multiple
-                        name="songs"
-                        id="songs"
-                        value={formData.songs}
-                        onChange={handleSongChange}
-                        className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        size={5}
-                      >
-                        {songs.map((song) => (
-                          <option key={song.id} value={song.id}>
-                            {song.title} - {song.artist}
-                          </option>
-                        ))}
-                      </select>
-                      <p className="mt-2 text-sm text-gray-500">
-                        Mantén presionado Ctrl (Cmd en Mac) para seleccionar múltiples canciones.
-                      </p>
-                    </div>
-                  </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Canciones
+            </label>
+            <div className="max-h-60 overflow-y-auto border rounded-md p-2">
+              {songs.map(song => (
+                <div key={song.id_cancion} className="flex items-center space-x-2 py-1">
+                  <input
+                    type="checkbox"
+                    id={`song-${song.id_cancion}`}
+                    checked={formData.canciones_seleccionadas.includes(song.id_cancion)}
+                    onChange={() => handleSongSelection(song.id_cancion)}
+                    className="rounded text-blue-600"
+                  />
+                  <label htmlFor={`song-${song.id_cancion}`} className="text-sm text-gray-700">
+                    {song.nombre_cancion} - {song.artista?.nombre_artista}
+                  </label>
                 </div>
-
-                <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
-                  <button
-                    type="submit"
-                    className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  >
-                    {editingId ? 'Actualizar' : 'Crear'} colección
-                  </button>
-                </div>
-              </div>
-            </form>
-
-            <div className="mt-8">
-              <div className="flex flex-col">
-                <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                  <div className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-                    <div className="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th
-                              scope="col"
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              Nombre
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              Descripción
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              Canciones
-                            </th>
-                            <th scope="col" className="relative px-6 py-3">
-                              <span className="sr-only">Acciones</span>
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {collections.map((collection) => (
-                            <tr key={collection.id}>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                {collection.name}
-                              </td>
-                              <td className="px-6 py-4 text-sm text-gray-500">
-                                {collection.description}
-                              </td>
-                              <td className="px-6 py-4 text-sm text-gray-500">
-                                {collection.songs.length} canciones
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <button
-                                  onClick={() => handleEdit(collection)}
-                                  className="text-indigo-600 hover:text-indigo-900 mr-4"
-                                >
-                                  Editar
-                                </button>
-                                <button
-                                  onClick={() => handleDelete(collection.id)}
-                                  className="text-red-600 hover:text-red-900"
-                                >
-                                  Eliminar
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
+
+        <div className="mt-4 flex justify-end space-x-2">
+          {editing && (
+            <button
+              type="button"
+              onClick={resetForm}
+              className="px-4 py-2 text-gray-600 hover:text-gray-800"
+            >
+              Cancelar
+            </button>
+          )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+          >
+            {loading ? 'Guardando...' : editing ? 'Actualizar' : 'Crear'}
+          </button>
+        </div>
+      </form>
+
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Nombre
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Descripción
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Canciones
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Acciones
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {collections.map((collection) => (
+              <tr key={collection.id_coleccion}>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-medium text-gray-900">
+                    {collection.nombre_coleccion}
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="text-sm text-gray-500">
+                    {collection.descripcion || '-'}
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="text-sm text-gray-500">
+                    {collection.canciones_asociadas?.length || 0} canciones
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <button
+                    onClick={() => handleEdit(collection)}
+                    className="text-indigo-600 hover:text-indigo-900 mr-4"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => handleDelete(collection.id_coleccion)}
+                    className="text-red-600 hover:text-red-900"
+                  >
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
-}
-
-export default Collections; 
+} 

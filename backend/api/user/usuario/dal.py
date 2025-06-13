@@ -21,7 +21,7 @@ async def create_usuario(db: AsyncSession, usuario):
     hashed_password = get_password_hash(usuario.password)
     db_usuario = models.Usuario(
         nombre_usuario=usuario.nombre_usuario,
-        contrasena_hash=hashed_password,
+        contrasena_usuario=hashed_password,
         email=usuario.email,
         rol_id=usuario.rol_id
     )
@@ -65,11 +65,11 @@ async def update_usuario(
         # Actualizar contraseña si se proporciona
         if usuario_update.contrasena_actual and usuario_update.nueva_contrasena:
             # Verificar contraseña actual
-            if not verify_password(usuario_update.contrasena_actual, usuario.contrasena_hash):
+            if not verify_password(usuario_update.contrasena_actual, usuario.contrasena_usuario):
                 raise ValueError("La contraseña actual es incorrecta")
             
             # Actualizar con nueva contraseña
-            usuario.contrasena_hash = get_password_hash(usuario_update.nueva_contrasena)
+            usuario.contrasena_usuario = get_password_hash(usuario_update.nueva_contrasena)
 
         await db.commit()
         await db.refresh(usuario)

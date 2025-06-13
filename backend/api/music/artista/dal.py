@@ -48,3 +48,12 @@ async def update_artista(db: AsyncSession, artista_id: int, artista_data: schema
     await db.commit()
     await db.refresh(artista)
     return artista
+
+async def get_artistas(db: AsyncSession) -> list[models.Artista]:
+    result = await db.execute(
+        select(models.Artista).options(
+            selectinload(models.Artista.generos_asociados),
+            selectinload(models.Artista.albums)
+        )
+    )
+    return result.scalars().all()

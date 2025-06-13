@@ -5,7 +5,7 @@ from database import get_db
 from . import dal
 from music.album import schemas
 
-router = APIRouter(prefix="/album", tags=["Album"])
+router = APIRouter(prefix="/albums", tags=["Album"])
 
 
 @router.post("/", response_model=schemas.AlbumCreateRequest)
