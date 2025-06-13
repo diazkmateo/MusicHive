@@ -12,6 +12,13 @@ function Albums() {
   });
   const [editingId, setEditingId] = useState(null);
   const [formError, setFormError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    // Limpiar mensajes al cambiar entre crear y editar
+    setFormError('');
+    setSuccess('');
+  }, [editingId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -19,20 +26,50 @@ function Albums() {
       ...prev,
       [name]: value,
     }));
+    // Limpiar mensajes al modificar el formulario
+    setFormError('');
+    setSuccess('');
+  };
+
+  const validateForm = () => {
+    if (!formData.title.trim()) {
+      setFormError('El título es obligatorio');
+      return false;
+    }
+    if (!formData.artist.trim()) {
+      setFormError('El artista es obligatorio');
+      return false;
+    }
+    if (!formData.year) {
+      setFormError('El año es obligatorio');
+      return false;
+    }
+    if (!formData.genre.trim()) {
+      setFormError('El género es obligatorio');
+      return false;
+    }
+    return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
+    setSuccess('');
+
+    if (!validateForm()) {
+      return;
+    }
 
     try {
       if (editingId) {
         const response = await musicService.updateAlbum(editingId, formData);
         updateAlbum(response.data);
+        setSuccess('Álbum actualizado correctamente');
         setEditingId(null);
       } else {
         const response = await musicService.createAlbum(formData);
         addAlbum(response.data);
+        setSuccess('Álbum creado correctamente');
       }
 
       setFormData({
@@ -42,26 +79,33 @@ function Albums() {
         genre: '',
       });
     } catch (err) {
-      setFormError(err.response?.data?.detail || 'Error al guardar el álbum');
+      console.error('Error al guardar el álbum:', err);
+      setFormError(err.response?.data?.message || 'Error al guardar el álbum');
     }
   };
 
   const handleEdit = (album) => {
     setEditingId(album.id);
     setFormData({
-      title: album.title,
-      artist: album.artist,
-      year: album.year,
-      genre: album.genre,
+      title: album.title || '',
+      artist: album.artist || '',
+      year: album.year || '',
+      genre: album.genre || '',
     });
   };
 
   const handleDelete = async (id) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar este álbum?')) {
+      return;
+    }
+
     try {
       await musicService.deleteAlbum(id);
       deleteAlbum(id);
+      setSuccess('Álbum eliminado correctamente');
     } catch (err) {
-      setFormError('Error al eliminar el álbum');
+      console.error('Error al eliminar el álbum:', err);
+      setFormError(err.response?.data?.message || 'Error al eliminar el álbum');
     }
   };
 
@@ -95,6 +139,11 @@ function Albums() {
                   {formError && (
                     <div className="rounded-md bg-red-50 p-4">
                       <div className="text-sm text-red-700">{formError}</div>
+                    </div>
+                  )}
+                  {success && (
+                    <div className="rounded-md bg-green-50 p-4">
+                      <div className="text-sm text-green-700">{success}</div>
                     </div>
                   )}
 
@@ -149,6 +198,8 @@ function Albums() {
                         value={formData.year}
                         onChange={handleChange}
                         required
+                        min="1900"
+                        max={new Date().getFullYear()}
                         className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                       />
                     </div>
@@ -174,6 +225,23 @@ function Albums() {
                 </div>
 
                 <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
+                  {editingId && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingId(null);
+                        setFormData({
+                          title: '',
+                          artist: '',
+                          year: '',
+                          genre: '',
+                        });
+                      }}
+                      className="mr-3 inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                      Cancelar
+                    </button>
+                  )}
                   <button
                     type="submit"
                     className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"

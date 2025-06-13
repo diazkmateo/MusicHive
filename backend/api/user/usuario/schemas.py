@@ -16,6 +16,13 @@ class UsuarioLoginRequest(BaseModel):
     password: str  # Contraseña en texto plano
 
 
+class UsuarioUpdateRequest(BaseModel):
+    nombre_usuario: Optional[str] = None
+    email: Optional[str] = None
+    contrasena_actual: Optional[str] = None
+    nueva_contrasena: Optional[str] = None
+
+
 # RESPONSE
 class UsuarioResponse(BaseModel):
     id: int

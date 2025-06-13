@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 import logging
 from datetime import datetime, timedelta
@@ -19,6 +20,7 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="usuario/login")
 
 router = APIRouter(prefix="/usuario", tags=["Usuario"])
 
@@ -33,6 +35,28 @@ def create_access_token(data: dict):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db)
+) -> dict:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="No se pudieron validar las credenciales",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+        user_id: int = payload.get("id")
+        if user_id is None:
+            raise credentials_exception
+        return {"email": email, "id": user_id}
+    except JWTError:
+        raise credentials_exception
 
 
 @router.post("/login")
@@ -101,3 +125,31 @@ async def obtener_usuario(
     if usuario is None:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return usuario
+
+
+@router.put("/perfil", response_model=schemas.UsuarioResponse)
+async def actualizar_perfil(
+    usuario_update: schemas.UsuarioUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    logger.info(f"Recibida petición para actualizar perfil del usuario: {current_user['id']}")
+    try:
+        usuario_actualizado = await dal.update_usuario(
+            db, 
+            current_user['id'],
+            usuario_update
+        )
+        if not usuario_actualizado:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Usuario no encontrado"
+            )
+        logger.info(f"Perfil actualizado exitosamente: {usuario_actualizado}")
+        return usuario_actualizado
+    except Exception as e:
+        logger.error(f"Error al actualizar perfil: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )

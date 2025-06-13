@@ -1,55 +1,56 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
 import { userService } from '../services/api';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export const useAuth = () => {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
+  }
+  return context;
 };
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Verificar si hay un token guardado
-    const token = localStorage.getItem('token');
-    
-    if (token) {
-      // Verificar el token con el backend
-      userService.getProfile()
-        .then(response => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const response = await userService.getProfile();
           setUser(response.data);
-          setIsAuthenticated(true);
-        })
-        .catch(() => {
-          // Si el token expiró, limpiar todo
+        } catch (error) {
+          console.error('Error al obtener el perfil:', error);
           localStorage.removeItem('token');
-          setIsAuthenticated(false);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    } else {
+          setUser(null);
+        }
+      }
       setLoading(false);
-      setIsAuthenticated(false);
-    }
+    };
+
+    checkAuth();
   }, []);
 
   const login = async (email, password) => {
     try {
       const response = await userService.login({ email, password });
-      const { token, user } = response.data;
+      const { token, user: userData } = response.data;
+      
+      if (!token) {
+        throw new Error('No se recibió el token de acceso');
+      }
+
       localStorage.setItem('token', token);
-      setUser(user);
-      setIsAuthenticated(true);
+      setUser(userData);
       return { success: true };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.detail || 'Error al iniciar sesión' 
+      console.error('Error en login:', error);
+      return {
+        success: false,
+        error: error.response?.data?.detail || 'Error al iniciar sesión'
       };
     }
   };
@@ -59,9 +60,10 @@ export const AuthProvider = ({ children }) => {
       await userService.register(userData);
       return { success: true };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.detail || 'Error al registrarse' 
+      console.error('Error en registro:', error);
+      return {
+        success: false,
+        error: error.response?.data?.detail || 'Error al registrar usuario'
       };
     }
   };
@@ -69,40 +71,28 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
-    setIsAuthenticated(false);
-  };
-
-  const changePassword = async (currentPassword, newPassword) => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.post('http://localhost:3001/api/auth/change-password', {
-        current_password: currentPassword,
-        new_password: newPassword
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.response?.data?.detail || 'Error al cambiar la contraseña'
-      };
-    }
   };
 
   const value = {
     user,
     loading,
-    isAuthenticated,
     login,
     register,
     logout,
-    changePassword
+    isAuthenticated: !!user
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="loader"></div>
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }; 

@@ -4,71 +4,87 @@ import { userService } from '../services/api';
 
 function Profile() {
   const { user } = useAuth();
-  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [formData, setFormData] = useState({
-    username: '',
+    nombre_usuario: '',
     email: '',
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
+    contrasena_actual: '',
+    nueva_contrasena: '',
+    confirmar_contrasena: '',
   });
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await userService.getProfile();
-        setProfile(response.data);
-        setFormData((prev) => ({
-          ...prev,
-          username: response.data.username,
-          email: response.data.email,
-        }));
-      } catch (err) {
-        setError('Error al cargar el perfil');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (user) {
-      fetchProfile();
+      setFormData(prev => ({
+        ...prev,
+        nombre_usuario: user.nombre_usuario || '',
+        email: user.email || '',
+      }));
+      setLoading(false);
     }
   }, [user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       [name]: value,
     }));
+    setError('');
+    setSuccess('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
 
-    if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
-      setError('Las contraseñas no coinciden');
+    // Validaciones
+    if (!formData.nombre_usuario || !formData.email) {
+      setError('El nombre de usuario y el correo electrónico son obligatorios');
       return;
+    }
+
+    if (formData.nueva_contrasena) {
+      if (!formData.contrasena_actual) {
+        setError('Debes ingresar tu contraseña actual para cambiarla');
+        return;
+      }
+      if (formData.nueva_contrasena !== formData.confirmar_contrasena) {
+        setError('Las contraseñas no coinciden');
+        return;
+      }
+      if (formData.nueva_contrasena.length < 6) {
+        setError('La nueva contraseña debe tener al menos 6 caracteres');
+        return;
+      }
     }
 
     try {
       const updateData = {
-        username: formData.username,
+        nombre_usuario: formData.nombre_usuario,
         email: formData.email,
       };
 
-      if (formData.newPassword) {
-        updateData.current_password = formData.currentPassword;
-        updateData.new_password = formData.newPassword;
+      if (formData.nueva_contrasena) {
+        updateData.contrasena_actual = formData.contrasena_actual;
+        updateData.nueva_contrasena = formData.nueva_contrasena;
       }
 
-      const response = await userService.updateProfile(updateData);
-      setProfile(response.data);
-      setError('');
+      await userService.updateProfile(updateData);
+      setSuccess('Perfil actualizado correctamente');
+      
+      // Limpiar campos de contraseña
+      setFormData(prev => ({
+        ...prev,
+        contrasena_actual: '',
+        nueva_contrasena: '',
+        confirmar_contrasena: '',
+      }));
     } catch (err) {
+      console.error('Error al actualizar el perfil:', err);
       setError(err.response?.data?.detail || 'Error al actualizar el perfil');
     }
   };
@@ -98,10 +114,15 @@ function Profile() {
                   <div className="text-sm text-red-700">{error}</div>
                 </div>
               )}
+              {success && (
+                <div className="rounded-md bg-green-50 p-4">
+                  <div className="text-sm text-green-700">{success}</div>
+                </div>
+              )}
               <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                 <div className="sm:col-span-3">
                   <label
-                    htmlFor="username"
+                    htmlFor="nombre_usuario"
                     className="block text-sm font-medium text-gray-700"
                   >
                     Nombre de usuario
@@ -109,10 +130,11 @@ function Profile() {
                   <div className="mt-1">
                     <input
                       type="text"
-                      name="username"
-                      id="username"
-                      value={formData.username}
+                      name="nombre_usuario"
+                      id="nombre_usuario"
+                      value={formData.nombre_usuario}
                       onChange={handleChange}
+                      required
                       className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
                     />
                   </div>
@@ -132,6 +154,7 @@ function Profile() {
                       id="email"
                       value={formData.email}
                       onChange={handleChange}
+                      required
                       className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
                     />
                   </div>
@@ -144,7 +167,7 @@ function Profile() {
                   <div className="mt-2 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                     <div className="sm:col-span-2">
                       <label
-                        htmlFor="currentPassword"
+                        htmlFor="contrasena_actual"
                         className="block text-sm font-medium text-gray-700"
                       >
                         Contraseña actual
@@ -152,9 +175,9 @@ function Profile() {
                       <div className="mt-1">
                         <input
                           type="password"
-                          name="currentPassword"
-                          id="currentPassword"
-                          value={formData.currentPassword}
+                          name="contrasena_actual"
+                          id="contrasena_actual"
+                          value={formData.contrasena_actual}
                           onChange={handleChange}
                           className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
                         />
@@ -163,7 +186,7 @@ function Profile() {
 
                     <div className="sm:col-span-2">
                       <label
-                        htmlFor="newPassword"
+                        htmlFor="nueva_contrasena"
                         className="block text-sm font-medium text-gray-700"
                       >
                         Nueva contraseña
@@ -171,9 +194,9 @@ function Profile() {
                       <div className="mt-1">
                         <input
                           type="password"
-                          name="newPassword"
-                          id="newPassword"
-                          value={formData.newPassword}
+                          name="nueva_contrasena"
+                          id="nueva_contrasena"
+                          value={formData.nueva_contrasena}
                           onChange={handleChange}
                           className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
                         />
@@ -182,7 +205,7 @@ function Profile() {
 
                     <div className="sm:col-span-2">
                       <label
-                        htmlFor="confirmPassword"
+                        htmlFor="confirmar_contrasena"
                         className="block text-sm font-medium text-gray-700"
                       >
                         Confirmar contraseña
@@ -190,9 +213,9 @@ function Profile() {
                       <div className="mt-1">
                         <input
                           type="password"
-                          name="confirmPassword"
-                          id="confirmPassword"
-                          value={formData.confirmPassword}
+                          name="confirmar_contrasena"
+                          id="confirmar_contrasena"
+                          value={formData.confirmar_contrasena}
                           onChange={handleChange}
                           className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
                         />
