@@ -1,0 +1,75 @@
+/* Estilos específicos para la página de álbumes */
+.album-section {
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.album-section h2 {
+    color: #333;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+}
+
+.album-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.album-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.album-form label {
+    font-weight: 500;
+    color: #555;
+}
+
+.album-form input,
+.album-form textarea {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.album-form textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.album-form button {
+    background-color: #3498db;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.album-form button:hover {
+    background-color: #2980b9;
+}
+
+@media (max-width: 768px) {
+    .album-section {
+        padding: 1.5rem;
+    }
+
+    .album-form {
+        gap: 1rem;
+    }
+
+    .album-form input,
+    .album-form textarea {
+        padding: 0.5rem;
+    }
+} 

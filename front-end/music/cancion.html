@@ -1,35 +1,54 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>MusicHive</title>
+        <title>MusicHive - Gestión de Canciones</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href="/front-end/styles/main.css">
+        <link rel="stylesheet" type="text/css" href="/front-end/styles/cancion.css">
     </head>
 
     <body>
-        <h1>MusicHive</h1>
+        <header>
+            <h1>MusicHive</h1>
+        </header>
 
-        <h2>Crear Canción</h2>
-        <form action="http://localhost:8000/cancion/" method="post">
-            <label for="nombre_cancion">Nombre de la Canción:</label><br>
-            <input type="text" id="nombre_cancion" name="nombre_cancion" required><br><br>
+        <div class="container">
+            <a href="/front-end/index.html" class="back-link">← Volver al inicio</a>
 
-            <label for="duracion_segundos">Duración (segundos):</label><br>
-            <input type="number" id="duracion_segundos" name="duracion_segundos" required><br><br>
+            <section class="cancion-section">
+                <h2>Crear Canción</h2>
+                <form action="http://localhost:8000/cancion/create" method="post" enctype="multipart/form-data" class="cancion-form">
+                    <div class="form-group">
+                        <label for="titulo">Título de la Canción</label>
+                        <input type="text" id="titulo" name="titulo" required>
+                    </div>
 
-            <label for="numero_pista">Número de Pista:</label><br>
-            <input type="number" id="numero_pista" name="numero_pista"><br><br>
+                    <div class="form-group">
+                        <label for="album_id">ID del Álbum</label>
+                        <input type="number" id="album_id" name="album_id" required>
+                    </div>
 
-            <label for="album_id">ID del Álbum:</label><br>
-            <input type="number" id="album_id" name="album_id" required><br><br>
+                    <div class="form-group">
+                        <label for="duracion">Duración (en segundos)</label>
+                        <input type="number" id="duracion" name="duracion" required>
+                    </div>
 
-            <input type="submit" value="Crear Canción">
-        </form>
+                    <button type="submit">Crear Canción</button>
+                </form>
+            </section>
 
-        <h2>Obtener Canción</h2>
-        <form id="get-cancion-form">
-            <label for="cancion_id">ID de la Canción:</label><br>
-            <input type="number" id="cancion_id" name="cancion_id" required><br><br>
-            <input type="submit" value="Obtener Canción">
-        </form>
+            <section class="cancion-section">
+                <h2>Obtener Canción</h2>
+                <form id="get-cancion-form" class="cancion-form">
+                    <div class="form-group">
+                        <label for="cancion_id">ID de la Canción</label>
+                        <input type="number" id="cancion_id" name="cancion_id" required>
+                    </div>
+                    <button type="submit">Obtener Canción</button>
+                </form>
+            </section>
+        </div>
+
         <script>
             document.getElementById('get-cancion-form').addEventListener('submit', function(e) {
                 e.preventDefault();

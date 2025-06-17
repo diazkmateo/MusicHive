@@ -1,41 +1,64 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>MusicHive</title>
-
+        <title>MusicHive - Gestión de Álbumes</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href="/front-end/styles/main.css">
+        <link rel="stylesheet" type="text/css" href="/front-end/styles/album.css">
     </head>
 
     <body>
-        <h1>MusicHive</h1>
+        <header>
+            <h1>MusicHive</h1>
+        </header>
 
-        <h2>Crear Álbum</h2>
-        <form action="http://localhost:8000/album/create" method="post" enctype="multipart/form-data">
-            <label for="nombre_album">Nombre del Álbum:</label><br>
-            <input type="text" id="nombre_album" name="nombre_album"><br><br>
+        <div class="container">
+            <a href="/front-end/index.html" class="back-link">← Volver al inicio</a>
 
-            <label for="fecha_salida_album">Fecha de Salida:</label><br>
-            <input type="date" id="fecha_salida_album" name="fecha_salida_album"><br><br>
+            <section class="album-section">
+                <h2>Crear Álbum</h2>
+                <form action="http://localhost:8000/album/create" method="post" enctype="multipart/form-data" class="album-form">
+                    <div class="form-group">
+                        <label for="titulo">Título del Álbum</label>
+                        <input type="text" id="titulo" name="titulo" required>
+                    </div>
 
-            <label for="genero_id">ID del Género:</label><br>
-            <input type="number" id="genero_id" name="genero_id"><br><br>
+                    <div class="form-group">
+                        <label for="artista_id">ID del Artista</label>
+                        <input type="number" id="artista_id" name="artista_id" required>
+                    </div>
 
-            <label for="artista_id">ID del Artista:</label><br>
-            <input type="number" id="artista_id" name="artista_id"><br><br>
+                    <div class="form-group">
+                        <label for="genero_id">ID del Género</label>
+                        <input type="number" id="genero_id" name="genero_id" required>
+                    </div>
 
-            <input type="submit" value="Crear Álbum">
-        </form>
+                    <div class="form-group">
+                        <label for="fecha_lanzamiento">Fecha de Lanzamiento</label>
+                        <input type="date" id="fecha_lanzamiento" name="fecha_lanzamiento" required>
+                    </div>
 
-        <h2>Obtener Álbum</h2>
-        <form id="get-album-form">
-            <label for="album_id">ID del Álbum:</label><br>
-            <input type="number" id="album_id" name="album_id" required><br><br>
-            <input type="submit" value="Obtener Álbum">
-        </form>
+                    <button type="submit">Crear Álbum</button>
+                </form>
+            </section>
+
+            <section class="album-section">
+                <h2>Obtener Álbum</h2>
+                <form id="get-album-form" class="album-form">
+                    <div class="form-group">
+                        <label for="album_id">ID del Álbum</label>
+                        <input type="number" id="album_id" name="album_id" required>
+                    </div>
+                    <button type="submit">Obtener Álbum</button>
+                </form>
+            </section>
+        </div>
+
         <script>
             document.getElementById('get-album-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const album_id = document.getElementById('album_id').value;
-            window.location.href = `http://localhost:8000/album/${album_id}`;
+                e.preventDefault();
+                const album_id = document.getElementById('album_id').value;
+                window.location.href = `http://localhost:8000/album/${album_id}`;
             });
         </script>
     </body>

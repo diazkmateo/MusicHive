@@ -1,63 +1,54 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>MusicHive</title>
+        <title>MusicHive - Gestión de Géneros</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href="/front-end/styles/main.css">
+        <link rel="stylesheet" type="text/css" href="/front-end/styles/genero.css">
     </head>
 
     <body>
-        <h1>MusicHive</h1>
+        <header>
+            <h1>MusicHive</h1>
+        </header>
 
-        <h2>Crear Género</h2>
-        <form action="http://localhost:8000/genero/create" method="post" enctype="multipart/form-data">
-            <label for="nombre_genero">Nombre del Género:</label><br>
-            <input type="text" id="nombre_genero" name="nombre_genero" required><br><br>
-            <input type="submit" value="Crear Género">
-        </form>
+        <div class="container">
+            <a href="/front-end/index.html" class="back-link">← Volver al inicio</a>
 
-        <h2>Obtener Género</h2>
-        <form id="get-genero-form">
-            <label for="genero_id">ID del Género:</label><br>
-            <input type="number" id="genero_id" name="genero_id" required><br><br>
-            <input type="submit" value="Obtener Género">
-        </form>
+            <section class="genero-section">
+                <h2>Crear Género</h2>
+                <form action="http://localhost:8000/genero/create" method="post" enctype="multipart/form-data" class="genero-form">
+                    <div class="form-group">
+                        <label for="nombre">Nombre del Género</label>
+                        <input type="text" id="nombre" name="nombre" required>
+                    </div>
 
-        <h2>Modificar Género</h2>
-        <form action="http://localhost:8000/genero/update" method="post" enctype="multipart/form-data">
-            <label for="update_genero_id">ID del Género:</label><br>
-            <input type="number" id="update_genero_id" name="genero_id" required><br><br>
-            <label for="update_nombre_genero">Nuevo Nombre del Género:</label><br>
-            <input type="text" id="update_nombre_genero" name="nombre_genero" required><br><br>
-            <input type="submit" value="Modificar Género">
-        </form>
+                    <div class="form-group">
+                        <label for="descripcion">Descripción</label>
+                        <textarea id="descripcion" name="descripcion" rows="4"></textarea>
+                    </div>
 
-        <h2>Borrar Género</h2>
-        <form id="delete-genero-form">
-            <label for="delete_genero_id">ID del Género:</label><br>
-            <input type="number" id="delete_genero_id" name="genero_id" required><br><br>
-            <input type="submit" value="Borrar Género">
-        </form>
+                    <button type="submit">Crear Género</button>
+                </form>
+            </section>
+
+            <section class="genero-section">
+                <h2>Obtener Género</h2>
+                <form id="get-genero-form" class="genero-form">
+                    <div class="form-group">
+                        <label for="genero_id">ID del Género</label>
+                        <input type="number" id="genero_id" name="genero_id" required>
+                    </div>
+                    <button type="submit">Obtener Género</button>
+                </form>
+            </section>
+        </div>
 
         <script>
             document.getElementById('get-genero-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const genero_id = document.getElementById('genero_id').value;
-            window.location.href = `http://localhost:8000/genero/${genero_id}`;
-            });
-
-            document.getElementById('delete-genero-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const genero_id = document.getElementById('delete_genero_id').value;
-            fetch(`http://localhost:8000/genero/delete/${genero_id}`, {
-                method: 'POST'
-            })
-            .then(response => {
-                if (response.ok) {
-                alert('Género borrado exitosamente');
-                } else {
-                alert('Error al borrar el género');
-                }
-            })
-            .catch(() => alert('Error al conectar con el servidor'));
+                e.preventDefault();
+                const genero_id = document.getElementById('genero_id').value;
+                window.location.href = `http://localhost:8000/genero/${genero_id}`;
             });
         </script>
     </body>

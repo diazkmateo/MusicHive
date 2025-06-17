@@ -1,32 +1,49 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>MusicHive</title>
+        <title>MusicHive - Gestión de Artistas</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href="/front-end/styles/main.css">
+        <link rel="stylesheet" type="text/css" href="/front-end/styles/artista.css">
     </head>
 
     <body>
-        <h1>MusicHive</h1>
+        <header>
+            <h1>MusicHive</h1>
+        </header>
 
-        <h2>Crear Artista</h2>
-        <form action="http://localhost:8000/artista/create" method="post">
-            <label for="nombre_artista">Nombre del Artista:</label><br>
-            <input type="text" id="nombre_artista" name="nombre_artista" required><br><br>
+        <div class="container">
+            <a href="/front-end/index.html" class="back-link">← Volver al inicio</a>
 
-            <label for="fecha_formacion">Fecha de Formación:</label><br>
-            <input type="date" id="fecha_formacion" name="fecha_formacion"><br><br>
+            <section class="artista-section">
+                <h2>Crear Artista</h2>
+                <form action="http://localhost:8000/artista/create" method="post" enctype="multipart/form-data" class="artista-form">
+                    <div class="form-group">
+                        <label for="nombre">Nombre del Artista</label>
+                        <input type="text" id="nombre" name="nombre" required>
+                    </div>
 
-            <label for="pais_origen">País de Origen:</label><br>
-            <input type="text" id="pais_origen" name="pais_origen"><br><br>
+                    <div class="form-group">
+                        <label for="biografia">Biografía</label>
+                        <textarea id="biografia" name="biografia" rows="4"></textarea>
+                    </div>
 
-            <input type="submit" value="Crear Artista">
-        </form>
+                    <button type="submit">Crear Artista</button>
+                </form>
+            </section>
 
-        <h2>Obtener Artista</h2>
-        <form id="get-artista-form">
-            <label for="artista_id">ID del Artista:</label><br>
-            <input type="number" id="artista_id" name="artista_id" required><br><br>
-            <input type="submit" value="Obtener Artista">
-        </form>
+            <section class="artista-section">
+                <h2>Obtener Artista</h2>
+                <form id="get-artista-form" class="artista-form">
+                    <div class="form-group">
+                        <label for="artista_id">ID del Artista</label>
+                        <input type="number" id="artista_id" name="artista_id" required>
+                    </div>
+                    <button type="submit">Obtener Artista</button>
+                </form>
+            </section>
+        </div>
+
         <script>
             document.getElementById('get-artista-form').addEventListener('submit', function(e) {
                 e.preventDefault();

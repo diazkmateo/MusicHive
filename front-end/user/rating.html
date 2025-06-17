@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>MusicHive - Gestión de Ratings</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href="/front-end/styles/main.css">
+        <link rel="stylesheet" type="text/css" href="/front-end/styles/rating.css">
+    </head>
+
+    <body>
+        <header>
+            <h1>MusicHive</h1>
+        </header>
+
+        <div class="container">
+            <a href="/front-end/index.html" class="back-link">← Volver al inicio</a>
+
+            <section class="rating-section">
+                <h2>Crear Rating</h2>
+                <form action="http://localhost:8000/rating/create" method="post" enctype="multipart/form-data" class="rating-form">
+                    <div class="form-group">
+                        <label for="usuario_id">ID del Usuario</label>
+                        <input type="number" id="usuario_id" name="usuario_id" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cancion_id">ID de la Canción</label>
+                        <input type="number" id="cancion_id" name="cancion_id" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="puntuacion">Puntuación (1-5)</label>
+                        <input type="number" id="puntuacion" name="puntuacion" min="1" max="5" required>
+                    </div>
+
+                    <button type="submit">Crear Rating</button>
+                </form>
+            </section>
+
+            <section class="rating-section">
+                <h2>Obtener Rating</h2>
+                <form id="get-rating-form" class="rating-form">
+                    <div class="form-group">
+                        <label for="rating_id">ID del Rating</label>
+                        <input type="number" id="rating_id" name="rating_id" required>
+                    </div>
+                    <button type="submit">Obtener Rating</button>
+                </form>
+            </section>
+        </div>
+
+        <script>
+            document.getElementById('get-rating-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const rating_id = document.getElementById('rating_id').value;
+                window.location.href = `http://localhost:8000/rating/${rating_id}`;
+            });
+        </script>
+    </body>
+</html> 
