@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>MusicHive</title>
+    </head>
+
+    <body>
+        <h1>MusicHive</h1>
+
+        <h2>Crear Review</h2>
+        <form action="http://localhost:8000/review/" method="post" enctype="application/x-www-form-urlencoded">
+            <label for="titulo_review">Título de la Review:</label><br>
+            <input type="text" id="titulo_review" name="titulo_review" required><br><br>
+            <label for="nota_review">Nota de la Review:</label><br>
+            <input type="number" id="nota_review" name="nota_review" required><br><br>
+            <label for="texto_review">Texto de la Review:</label><br>
+            <textarea id="texto_review" name="texto_review" rows="5" cols="40"></textarea><br><br>
+            <label for="album_id">ID del Álbum:</label><br>
+            <input type="number" id="album_id" name="album_id" required><br><br>
+            <label for="usuario_id">ID del Usuario:</label><br> 
+            <input type="number" id="usuario_id" name="usuario_id" required><br><br>
+            <input type="submit" value="Crear Review">
+        </form>
+
+        <h2>Obtener Review</h2>
+        <form id="get-review-form">
+            <label for="review_id">ID de la Review:</label><br>
+            <input type="number" id="review_id" name="review_id" required><br><br>
+            <input type="submit" value="Obtener Review">
+        </form>
+
+        <h2>Borrar Review</h2>
+        <form id="delete-review-form">
+            <label for="delete_review_id">ID de la Review:</label><br>
+            <input type="number" id="delete_review_id" name="review_id" required><br><br>
+            <input type="submit" value="Borrar Review">
+        </form>
+
+        <script>
+            document.getElementById('get-review-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const review_id = document.getElementById('review_id').value;
+                window.location.href = `http://localhost:8000/review/${review_id}`;
+            });
+
+            document.getElementById('delete-review-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const review_id = document.getElementById('delete_review_id').value;
+                fetch(`http://localhost:8000/review/delete/${review_id}`, {
+                    method: 'POST'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Review borrada exitosamente');
+                    } else {
+                        alert('Error al borrar la review');
+                    }
+                })
+                .catch(() => alert('Error al conectar con el servidor'));
+            });
+        </script>
+    </body>
+</html>

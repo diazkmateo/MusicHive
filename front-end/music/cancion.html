@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>MusicHive</title>
+    </head>
+
+    <body>
+        <h1>MusicHive</h1>
+
+        <h2>Crear Canción</h2>
+        <form action="http://localhost:8000/cancion/" method="post">
+            <label for="nombre_cancion">Nombre de la Canción:</label><br>
+            <input type="text" id="nombre_cancion" name="nombre_cancion" required><br><br>
+
+            <label for="duracion_segundos">Duración (segundos):</label><br>
+            <input type="number" id="duracion_segundos" name="duracion_segundos" required><br><br>
+
+            <label for="numero_pista">Número de Pista:</label><br>
+            <input type="number" id="numero_pista" name="numero_pista"><br><br>
+
+            <label for="album_id">ID del Álbum:</label><br>
+            <input type="number" id="album_id" name="album_id" required><br><br>
+
+            <input type="submit" value="Crear Canción">
+        </form>
+
+        <h2>Obtener Canción</h2>
+        <form id="get-cancion-form">
+            <label for="cancion_id">ID de la Canción:</label><br>
+            <input type="number" id="cancion_id" name="cancion_id" required><br><br>
+            <input type="submit" value="Obtener Canción">
+        </form>
+        <script>
+            document.getElementById('get-cancion-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const cancion_id = document.getElementById('cancion_id').value;
+                window.location.href = `http://localhost:8000/cancion/${cancion_id}`;
+            });
+        </script>
+    </body>
+</html>

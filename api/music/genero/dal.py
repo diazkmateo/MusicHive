@@ -4,9 +4,9 @@ from sqlalchemy.orm import selectinload
 import models
 from music.genero import schemas
 
-async def create_genero(db: AsyncSession, genero: schemas.GeneroCreateRequest) -> models.Genero:
+async def create_genero(db: AsyncSession, genero: str):
     nuevo_genero = models.Genero(
-        nombre_genero=genero.nombre_genero
+        nombre_genero = genero
     )
     db.add(nuevo_genero)
     await db.commit()

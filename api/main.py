@@ -22,9 +22,9 @@ app = FastAPI()
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(current_dir)
-templates_dir = os.path.join(project_root, "templates")
+templates_dir = os.path.join(project_root, "front-end")
 
-app.mount("/templates", StaticFiles(directory=templates_dir), name="templates")
+app.mount("/front-end", StaticFiles(directory=templates_dir), name="templates")
 templates = Jinja2Templates(directory=templates_dir)
 
 

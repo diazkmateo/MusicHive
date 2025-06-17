@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>MusicHive</title>
+    </head>
+
+    <body>
+        <h1>MusicHive</h1>
+
+        <h2>Crear Artista</h2>
+        <form action="http://localhost:8000/artista/create" method="post">
+            <label for="nombre_artista">Nombre del Artista:</label><br>
+            <input type="text" id="nombre_artista" name="nombre_artista" required><br><br>
+
+            <label for="fecha_formacion">Fecha de Formación:</label><br>
+            <input type="date" id="fecha_formacion" name="fecha_formacion"><br><br>
+
+            <label for="pais_origen">País de Origen:</label><br>
+            <input type="text" id="pais_origen" name="pais_origen"><br><br>
+
+            <input type="submit" value="Crear Artista">
+        </form>
+
+        <h2>Obtener Artista</h2>
+        <form id="get-artista-form">
+            <label for="artista_id">ID del Artista:</label><br>
+            <input type="number" id="artista_id" name="artista_id" required><br><br>
+            <input type="submit" value="Obtener Artista">
+        </form>
+        <script>
+            document.getElementById('get-artista-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const artista_id = document.getElementById('artista_id').value;
+                window.location.href = `http://localhost:8000/artista/${artista_id}`;
+            });
+        </script>
+    </body>
+</html>

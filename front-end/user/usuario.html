@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>MusicHive - Usuario</title>
+    </head>
+
+    <body>
+        <h1>MusicHive</h1>
+
+        <h2>Crear Usuario</h2>
+        <form action="http://localhost:8000/usuario/" method="post" enctype="application/json" id="create-usuario-form">
+            <label for="nombre_usuario">Nombre de Usuario:</label><br>
+            <input type="text" id="nombre_usuario" name="nombre_usuario" required><br><br>
+            <label for="contrasena_hash">Contraseña:</label><br>
+            <input type="password" id="contrasena_hash" name="contrasena_hash" required><br><br>
+            <label for="email">Email:</label><br>
+            <input type="email" id="email" name="email" required><br><br>
+            <label for="rol_id">Rol ID:</label><br>
+            <input type="number" id="rol_id" name="rol_id" required><br><br>
+            <input type="submit" value="Crear Usuario">
+        </form>
+
+        <h2>Obtener Usuario</h2>
+        <form id="get-usuario-form">
+            <label for="usuario_id">ID del Usuario:</label><br>
+            <input type="number" id="usuario_id" name="usuario_id" required><br><br>
+            <input type="submit" value="Obtener Usuario">
+        </form>
+
+        <h2>Borrar Usuario</h2>
+        <form id="delete-usuario-form">
+            <label for="delete_usuario_id">ID del Usuario:</label><br>
+            <input type="number" id="delete_usuario_id" name="usuario_id" required><br><br>
+            <input type="submit" value="Borrar Usuario">
+        </form>
+
+        <script>
+            // Crear usuario usando fetch para enviar JSON (Form solo acepta post y get)
+            document.getElementById('create-usuario-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const data = {
+                    nombre_usuario: document.getElementById('nombre_usuario').value,
+                    contrasena_hash: document.getElementById('contrasena_hash').value,
+                    email: document.getElementById('email').value,
+                    rol_id: parseInt(document.getElementById('rol_id').value)
+                };
+                fetch('http://localhost:8000/usuario/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Usuario creado exitosamente');
+                    } else {
+                        alert('Error al crear el usuario');
+                    }
+                })
+                .catch(() => alert('Error al conectar con el servidor'));
+            });
+
+            // Obtener usuario
+            document.getElementById('get-usuario-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const usuario_id = document.getElementById('usuario_id').value;
+                window.location.href = `http://localhost:8000/usuario/${usuario_id}`;
+            });
+
+            // Borrar usuario 
+            document.getElementById('delete-usuario-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const usuario_id = document.getElementById('delete_usuario_id').value;
+                fetch(`http://localhost:8000/usuario/${usuario_id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Usuario borrado exitosamente');
+                    } else {
+                        alert('Error al borrar el usuario');
+                    }
+                })
+                .catch(() => alert('Error al conectar con el servidor'));
+            });
+        </script>
+    </body>
+</html>

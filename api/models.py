@@ -40,6 +40,9 @@ class Artista(Base):
     
 class ArtistaGenero(Base):
     __tablename__ = "artista_genero"
+
+    id = Column(Integer, primary_key=True, index=True, name="id_artista_genero")
+
     artista_id = Column(Integer, ForeignKey("artista.id_artista"), primary_key=True)
     genero_id = Column(Integer, ForeignKey("genero.id_genero"), primary_key=True)
 
