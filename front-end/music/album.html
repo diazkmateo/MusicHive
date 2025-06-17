@@ -4,7 +4,7 @@
         <title>MusicHive - Gestión de Álbumes</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" type="text/css" href="/front-end/styles/main.css">
-        <link rel="stylesheet" type="text/css" href="/front-end/styles/album.css">
+        <link rel="stylesheet" type="text/css" href="/front-end/music/album.css">
     </head>
 
     <body>
@@ -17,10 +17,10 @@
 
             <section class="album-section">
                 <h2>Crear Álbum</h2>
-                <form action="http://localhost:8000/album/create" method="post" enctype="multipart/form-data" class="album-form">
+                <form id="create-album-form" class="album-form">
                     <div class="form-group">
-                        <label for="titulo">Título del Álbum</label>
-                        <input type="text" id="titulo" name="titulo" required>
+                        <label for="nombre_album">Título del Álbum</label>
+                        <input type="text" id="nombre_album" name="nombre_album" required>
                     </div>
 
                     <div class="form-group">
@@ -30,16 +30,21 @@
 
                     <div class="form-group">
                         <label for="genero_id">ID del Género</label>
-                        <input type="number" id="genero_id" name="genero_id" required>
+                        <input type="number" id="genero_id" name="genero_id">
                     </div>
 
                     <div class="form-group">
-                        <label for="fecha_lanzamiento">Fecha de Lanzamiento</label>
-                        <input type="date" id="fecha_lanzamiento" name="fecha_lanzamiento" required>
+                        <label for="fecha_salida_album">Fecha de Lanzamiento</label>
+                        <input type="date" id="fecha_salida_album" name="fecha_salida_album">
                     </div>
 
                     <button type="submit">Crear Álbum</button>
                 </form>
+            </section>
+
+            <section class="album-section">
+                <h2>Álbumes Creados</h2>
+                <div id="albums-container"></div>
             </section>
 
             <section class="album-section">
@@ -51,15 +56,153 @@
                     </div>
                     <button type="submit">Obtener Álbum</button>
                 </form>
+
+                <div id="album-details" class="album-details">
+                    <h3>Detalles del Álbum</h3>
+                    <div id="album-info"></div>
+                </div>
             </section>
         </div>
 
         <script>
-            document.getElementById('get-album-form').addEventListener('submit', function(e) {
+            // Función para cargar todos los álbumes
+            async function cargarAlbumes() {
+                try {
+                    const response = await fetch('http://localhost:8000/album/');
+                    if (response.ok) {
+                        const albums = await response.json();
+                        const container = document.getElementById('albums-container');
+                        container.innerHTML = ''; // Limpiar contenedor
+                        albums.forEach(album => addAlbumToList(album));
+                    } else {
+                        console.error('Error al cargar álbumes');
+                    }
+                } catch (error) {
+                    console.error('Error al cargar álbumes:', error);
+                }
+            }
+
+            // Cargar álbumes al inicio
+            window.addEventListener('load', cargarAlbumes);
+
+            // Función para crear un álbum
+            document.getElementById('create-album-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
-                const album_id = document.getElementById('album_id').value;
-                window.location.href = `http://localhost:8000/album/${album_id}`;
+                
+                const formData = {
+                    nombre_album: document.getElementById('nombre_album').value,
+                    artista_id: parseInt(document.getElementById('artista_id').value),
+                    genero_id: document.getElementById('genero_id').value ? parseInt(document.getElementById('genero_id').value) : null,
+                    fecha_salida_album: document.getElementById('fecha_salida_album').value || null
+                };
+
+                try {
+                    const response = await fetch('http://localhost:8000/album/create', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    if (response.ok) {
+                        // Limpiar el formulario
+                        this.reset();
+                        // Recargar todos los álbumes
+                        await cargarAlbumes();
+                    } else {
+                        const error = await response.json();
+                        alert('Error al crear el álbum: ' + (error.detail || 'Error desconocido'));
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al crear el álbum');
+                }
             });
+
+            // Función para obtener un álbum
+            document.getElementById('get-album-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const albumId = document.getElementById('album_id').value;
+
+                try {
+                    const response = await fetch(`http://localhost:8000/album/${albumId}`);
+                    
+                    if (response.ok) {
+                        const album = await response.json();
+                        displayAlbumDetails(album);
+                    } else {
+                        const error = await response.json();
+                        alert('Error al obtener el álbum: ' + (error.detail || 'Error desconocido'));
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al obtener el álbum');
+                }
+            });
+
+            // Función para agregar un álbum a la lista
+            function addAlbumToList(album) {
+                const container = document.getElementById('albums-container');
+                const albumElement = document.createElement('div');
+                albumElement.className = 'album-item';
+                albumElement.innerHTML = `
+                    <div class="album-header">
+                        <h4>${album.nombre_album}</h4>
+                        <span onclick="borrarAlbum(${album.id})" class="delete-x" title="Borrar álbum">×</span>
+                    </div>
+                    <div class="album-content">
+                        <p>ID: ${album.id}</p>
+                        <p>Artista ID: ${album.artista_id}</p>
+                        ${album.genero_id ? `<p>Género ID: ${album.genero_id}</p>` : ''}
+                        ${album.fecha_salida_album ? `<p>Fecha: ${album.fecha_salida_album}</p>` : ''}
+                        ${album.artista ? `<p>Artista: ${album.artista.nombre_artista}</p>` : ''}
+                        ${album.genero ? `<p>Género: ${album.genero.nombre_genero}</p>` : ''}
+                    </div>
+                `;
+                container.appendChild(albumElement);
+            }
+
+            // Función para borrar un álbum
+            async function borrarAlbum(albumId) {
+                if (!confirm('¿Estás seguro de que quieres borrar este álbum?')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`http://localhost:8000/album/${albumId}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        // Recargar la lista de álbumes
+                        await cargarAlbumes();
+                    } else {
+                        const error = await response.json();
+                        alert('Error al borrar el álbum: ' + (error.detail || 'Error desconocido'));
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al borrar el álbum');
+                }
+            }
+
+            // Función para mostrar los detalles de un álbum
+            function displayAlbumDetails(album) {
+                const container = document.getElementById('album-info');
+                container.innerHTML = `
+                    <div class="album-detail-item">
+                        <h4>${album.nombre_album}</h4>
+                        <p>ID: ${album.id}</p>
+                        <p>Artista ID: ${album.artista_id}</p>
+                        ${album.genero_id ? `<p>Género ID: ${album.genero_id}</p>` : ''}
+                        ${album.fecha_salida_album ? `<p>Fecha: ${album.fecha_salida_album}</p>` : ''}
+                        ${album.artista ? `<p>Artista: ${album.artista.nombre_artista}</p>` : ''}
+                        ${album.genero ? `<p>Género: ${album.genero.nombre_genero}</p>` : ''}
+                    </div>
+                `;
+            }
         </script>
     </body>
 </html>

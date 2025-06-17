@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Form
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional, Annotated
+from typing import Optional, Annotated, List
 from datetime import date
 
 from database import get_db
@@ -11,42 +11,41 @@ from music.album import schemas
 router = APIRouter(prefix="/album", tags=["Album"])
 
 
-@router.post("/create", response_model=schemas.AlbumCreateRequest)
+@router.post("/create", response_model=schemas.AlbumResponse)
 async def crear_album(
-    request: Request,
-
-    nombre_album: Annotated[str, Form(...)],
-    fecha_salida_album: Annotated[int, Form(...)],  
-    genero_id: Annotated[int, Form(...)],
-    artista_id: Annotated[int, Form(...)],
-
+    album: schemas.AlbumCreateRequest,
     db: AsyncSession = Depends(get_db)
 ):
-    try:
-        fecha_salida = date.fromisoformat(fecha_salida_album)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Fecha de salida inválida. Use formato YYYY-MM-DD.")
+    nuevo_album = await dal.create_album(db, album)
+    return nuevo_album
 
-    album_data = {
-        "nombre_album": nombre_album,
-        "fecha_salida_album": fecha_salida_album,
-        "genero_id": genero_id,
-        "artista_id": artista_id,
-    }
 
-    album_create_request = schemas.AlbumCreateRequest(**album_data)
-    nuevo_album = await dal.create_album(db, album_create_request)
-    return {"request": nuevo_album}
+@router.get("/", response_model=List[schemas.AlbumResponse])
+async def obtener_albumes(
+    db: AsyncSession = Depends(get_db)
+):
+    return await dal.select_all_albums(db)
 
 
 @router.get("/{album_id}", response_model=schemas.AlbumResponse)
 async def obtener_album(
-    request: Request,
     album_id: int,
     db: AsyncSession = Depends(get_db)
 ):
     album = await dal.select_album(db, album_id)
-    if album is None:
+    if not album:
         raise HTTPException(status_code=404, detail="Álbum no encontrado")
-    # return album
-    return {"request": album}
+    return album
+
+
+@router.delete("/{album_id}")
+async def borrar_album(
+    album_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    album = await dal.select_album(db, album_id)
+    if not album:
+        raise HTTPException(status_code=404, detail="Álbum no encontrado")
+    
+    await dal.delete_album(db, album_id)
+    return {"message": "Álbum eliminado correctamente"}

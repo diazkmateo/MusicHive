@@ -1,26 +1,37 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import date
 
 # REQUEST
 
 class CancionCreateRequest(BaseModel):
+    nombre_cancion: str
+    duracion_segundos: int
+    numero_pista: Optional[int]
+    album_id: int
+
+# RESPONSE
+
+class AlbumBase(BaseModel):
+    id: int
+    nombre_album: str
+    fecha_salida_album: Optional[date] = None
+    genero_id: Optional[int] = None
+    artista_id: int
+
+    class Config:
+        orm_mode = True
+
+class CancionResponse(BaseModel):
     id: int
     nombre_cancion: str
     duracion_segundos: int
     numero_pista: Optional[int]
-    
-    album_id: int 
-
-
-# RESPONSE
-
-class CancionResponse(BaseModel):
-    artista_id: int
-    genero_id: int
+    album_id: int
+    album: Optional[AlbumBase] = None
 
     class Config:
-        orm_mode = True  
+        orm_mode = True
 
 class CancionUpdateRequest(BaseModel):
     nombre_cancion: Optional[str] = None
@@ -29,4 +40,4 @@ class CancionUpdateRequest(BaseModel):
     album_id: Optional[int] = None
 
     class Config:
-        orm_mode = True  # Permite que Pydantic lea los datos de los modelos ORM
+        orm_mode = True

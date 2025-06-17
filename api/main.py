@@ -3,6 +3,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 
 import user.usuario.endpoint
 import user.rol.endpoint
@@ -19,6 +20,15 @@ import music.cancion.endpoint
 
 
 app = FastAPI()
+
+# Configuración de CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # En producción, especificar los orígenes permitidos
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(current_dir)

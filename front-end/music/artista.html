@@ -4,7 +4,7 @@
         <title>MusicHive - Gestión de Artistas</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" type="text/css" href="/front-end/styles/main.css">
-        <link rel="stylesheet" type="text/css" href="/front-end/styles/artista.css">
+        <link rel="stylesheet" type="text/css" href="/front-end/music/artista.css">
     </head>
 
     <body>
@@ -17,7 +17,7 @@
 
             <section class="artista-section">
                 <h2>Crear Artista</h2>
-                <form action="http://localhost:8000/artista/create" method="post" enctype="multipart/form-data" class="artista-form">
+                <form id="create-artista-form" class="artista-form">
                     <div class="form-group">
                         <label for="nombre">Nombre del Artista</label>
                         <input type="text" id="nombre" name="nombre" required>
@@ -33,6 +33,11 @@
             </section>
 
             <section class="artista-section">
+                <h2>Artistas Creados</h2>
+                <div id="artistas-container"></div>
+            </section>
+
+            <section class="artista-section">
                 <h2>Obtener Artista</h2>
                 <form id="get-artista-form" class="artista-form">
                     <div class="form-group">
@@ -41,15 +46,132 @@
                     </div>
                     <button type="submit">Obtener Artista</button>
                 </form>
+                <div id="artista-details" class="artista-details"></div>
             </section>
         </div>
 
         <script>
-            document.getElementById('get-artista-form').addEventListener('submit', function(e) {
+            // Cargar todos los artistas al iniciar
+            window.addEventListener('load', cargarArtistas);
+
+            // Función para cargar todos los artistas
+            async function cargarArtistas() {
+                try {
+                    const response = await fetch('http://localhost:8000/artista/');
+                    if (!response.ok) {
+                        throw new Error('Error al cargar artistas');
+                    }
+                    const artistas = await response.json();
+                    const container = document.getElementById('artistas-container');
+                    container.innerHTML = '';
+                    artistas.forEach(artista => addArtistaToList(artista));
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al cargar artistas');
+                }
+            }
+
+            // Función para añadir artista a la lista
+            function addArtistaToList(artista) {
+                const container = document.getElementById('artistas-container');
+                const artistaElement = document.createElement('div');
+                artistaElement.className = 'artista-item';
+                artistaElement.innerHTML = `
+                    <div class="artista-header">
+                        <h4>${artista.nombre}</h4>
+                        <span class="delete-x" onclick="borrarArtista(${artista.id})">×</span>
+                    </div>
+                    <div class="artista-content">
+                        <p><strong>ID:</strong> ${artista.id}</p>
+                        <p><strong>Biografía:</strong> ${artista.biografia || 'No disponible'}</p>
+                    </div>
+                `;
+                container.appendChild(artistaElement);
+            }
+
+            // Función para crear artista
+            document.getElementById('create-artista-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = {
+                    nombre: document.getElementById('nombre').value,
+                    biografia: document.getElementById('biografia').value
+                };
+
+                try {
+                    const response = await fetch('http://localhost:8000/artista/create', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Error al crear artista');
+                    }
+
+                    const data = await response.json();
+                    alert('Artista creado exitosamente');
+                    document.getElementById('create-artista-form').reset();
+                    cargarArtistas(); // Recargar la lista de artistas
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al crear artista');
+                }
+            });
+
+            // Función para obtener artista por ID
+            document.getElementById('get-artista-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const artista_id = document.getElementById('artista_id').value;
-                window.location.href = `http://localhost:8000/artista/${artista_id}`;
+                try {
+                    const response = await fetch(`http://localhost:8000/artista/${artista_id}`);
+                    if (!response.ok) {
+                        throw new Error('Artista no encontrado');
+                    }
+                    const artista = await response.json();
+                    mostrarDetallesArtista(artista);
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al obtener artista');
+                }
             });
+
+            // Función para mostrar detalles del artista
+            function mostrarDetallesArtista(artista) {
+                const detailsContainer = document.getElementById('artista-details');
+                detailsContainer.innerHTML = `
+                    <div class="artista-detail-item">
+                        <h4>Detalles del Artista</h4>
+                        <p><strong>ID:</strong> ${artista.id}</p>
+                        <p><strong>Nombre:</strong> ${artista.nombre}</p>
+                        <p><strong>Biografía:</strong> ${artista.biografia || 'No disponible'}</p>
+                    </div>
+                `;
+            }
+
+            // Función para borrar artista
+            async function borrarArtista(id) {
+                if (!confirm('¿Estás seguro de que quieres borrar este artista?')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`http://localhost:8000/artista/${id}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Error al borrar artista');
+                    }
+
+                    alert('Artista borrado exitosamente');
+                    cargarArtistas(); // Recargar la lista de artistas
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al borrar artista');
+                }
+            }
         </script>
     </body>
 </html>

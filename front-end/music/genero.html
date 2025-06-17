@@ -4,7 +4,7 @@
         <title>MusicHive - Gestión de Géneros</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" type="text/css" href="/front-end/styles/main.css">
-        <link rel="stylesheet" type="text/css" href="/front-end/styles/genero.css">
+        <link rel="stylesheet" type="text/css" href="/front-end/music/genero.css">
     </head>
 
     <body>
@@ -17,7 +17,7 @@
 
             <section class="genero-section">
                 <h2>Crear Género</h2>
-                <form action="http://localhost:8000/genero/create" method="post" enctype="multipart/form-data" class="genero-form">
+                <form id="create-genero-form" class="genero-form">
                     <div class="form-group">
                         <label for="nombre">Nombre del Género</label>
                         <input type="text" id="nombre" name="nombre" required>
@@ -33,6 +33,11 @@
             </section>
 
             <section class="genero-section">
+                <h2>Géneros Creados</h2>
+                <div id="generos-container"></div>
+            </section>
+
+            <section class="genero-section">
                 <h2>Obtener Género</h2>
                 <form id="get-genero-form" class="genero-form">
                     <div class="form-group">
@@ -41,15 +46,132 @@
                     </div>
                     <button type="submit">Obtener Género</button>
                 </form>
+                <div id="genero-details" class="genero-details"></div>
             </section>
         </div>
 
         <script>
-            document.getElementById('get-genero-form').addEventListener('submit', function(e) {
+            // Cargar todos los géneros al iniciar
+            window.addEventListener('load', cargarGeneros);
+
+            // Función para cargar todos los géneros
+            async function cargarGeneros() {
+                try {
+                    const response = await fetch('http://localhost:8000/genero/');
+                    if (!response.ok) {
+                        throw new Error('Error al cargar géneros');
+                    }
+                    const generos = await response.json();
+                    const container = document.getElementById('generos-container');
+                    container.innerHTML = '';
+                    generos.forEach(genero => addGeneroToList(genero));
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al cargar géneros');
+                }
+            }
+
+            // Función para añadir género a la lista
+            function addGeneroToList(genero) {
+                const container = document.getElementById('generos-container');
+                const generoElement = document.createElement('div');
+                generoElement.className = 'genero-item';
+                generoElement.innerHTML = `
+                    <div class="genero-header">
+                        <h4>${genero.nombre}</h4>
+                        <span class="delete-x" onclick="borrarGenero(${genero.id})">×</span>
+                    </div>
+                    <div class="genero-content">
+                        <p><strong>ID:</strong> ${genero.id}</p>
+                        <p><strong>Descripción:</strong> ${genero.descripcion || 'No disponible'}</p>
+                    </div>
+                `;
+                container.appendChild(generoElement);
+            }
+
+            // Función para crear género
+            document.getElementById('create-genero-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = {
+                    nombre: document.getElementById('nombre').value,
+                    descripcion: document.getElementById('descripcion').value
+                };
+
+                try {
+                    const response = await fetch('http://localhost:8000/genero/create', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Error al crear género');
+                    }
+
+                    const data = await response.json();
+                    alert('Género creado exitosamente');
+                    document.getElementById('create-genero-form').reset();
+                    cargarGeneros(); // Recargar la lista de géneros
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al crear género');
+                }
+            });
+
+            // Función para obtener género por ID
+            document.getElementById('get-genero-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const genero_id = document.getElementById('genero_id').value;
-                window.location.href = `http://localhost:8000/genero/${genero_id}`;
+                try {
+                    const response = await fetch(`http://localhost:8000/genero/${genero_id}`);
+                    if (!response.ok) {
+                        throw new Error('Género no encontrado');
+                    }
+                    const genero = await response.json();
+                    mostrarDetallesGenero(genero);
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al obtener género');
+                }
             });
+
+            // Función para mostrar detalles del género
+            function mostrarDetallesGenero(genero) {
+                const detailsContainer = document.getElementById('genero-details');
+                detailsContainer.innerHTML = `
+                    <div class="genero-detail-item">
+                        <h4>Detalles del Género</h4>
+                        <p><strong>ID:</strong> ${genero.id}</p>
+                        <p><strong>Nombre:</strong> ${genero.nombre}</p>
+                        <p><strong>Descripción:</strong> ${genero.descripcion || 'No disponible'}</p>
+                    </div>
+                `;
+            }
+
+            // Función para borrar género
+            async function borrarGenero(id) {
+                if (!confirm('¿Estás seguro de que quieres borrar este género?')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`http://localhost:8000/genero/${id}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Error al borrar género');
+                    }
+
+                    alert('Género borrado exitosamente');
+                    cargarGeneros(); // Recargar la lista de géneros
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al borrar género');
+                }
+            }
         </script>
     </body>
 </html>

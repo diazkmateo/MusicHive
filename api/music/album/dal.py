@@ -14,7 +14,18 @@ async def create_album(db: AsyncSession, album: schemas.AlbumCreateRequest) -> m
     db.add(nuevo_album)
     await db.commit()
     await db.refresh(nuevo_album)
-    return nuevo_album
+    
+    # Cargar las relaciones después de crear el álbum
+    result = await db.execute(
+        select(models.Album)
+        .where(models.Album.id == nuevo_album.id)
+        .options(
+            selectinload(models.Album.genero),
+            selectinload(models.Album.artista),
+            selectinload(models.Album.canciones)
+        )
+    )
+    return result.scalar_one()
 
 
 async def select_album(db: AsyncSession, album_id: int) -> models.Album | None:
@@ -25,7 +36,7 @@ async def select_album(db: AsyncSession, album_id: int) -> models.Album | None:
             selectinload(models.Album.canciones)
         )
     )
-    return result.scalar_one_or_none() ### Preguntar
+    return result.scalar_one_or_none()
 
 
 async def delete_album(db: AsyncSession, album_id: int) -> None:
@@ -53,3 +64,14 @@ async def update_album(db: AsyncSession, album_id: int, album_data: schemas.Albu
     await db.commit()
     await db.refresh(album)
     return album
+
+
+async def select_all_albums(db: AsyncSession) -> list[models.Album]:
+    result = await db.execute(
+        select(models.Album).options(
+            selectinload(models.Album.genero),
+            selectinload(models.Album.artista),
+            selectinload(models.Album.canciones)
+        )
+    )
+    return result.scalars().all()

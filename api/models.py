@@ -74,7 +74,8 @@ class Cancion(Base):
 
     album_id = Column(Integer, ForeignKey("album.id_album"), nullable=False)
 
-    # album = relationship("Album", back_populates="canciones")
+    album = relationship("Album", back_populates="canciones")
+    colecciones_asociadas = relationship("ColeccionCanciones", back_populates="cancion")
 
     def __repr__(self):
         return f"<Cancion(id={self.id}, nombre_cancion='{self.nombre_cancion}', duracion_segundos={self.duracion_segundos})>"

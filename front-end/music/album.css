@@ -17,7 +17,6 @@
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-    margin-bottom: 2rem;
 }
 
 .album-form .form-group {
@@ -60,74 +59,75 @@
     background-color: #2980b9;
 }
 
-/* Estilos para la lista de álbumes */
-.albums-list {
-    margin-top: 2rem;
-    padding-top: 2rem;
-    border-top: 1px solid #eee;
-}
-
-.albums-list h3 {
-    color: #333;
-    margin-bottom: 1rem;
-    font-size: 1.2rem;
-}
-
 #albums-container {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1rem;
+    gap: 20px;
+    padding: 20px;
 }
 
 .album-item {
     background-color: #f8f9fa;
-    padding: 1rem;
-    border-radius: 4px;
-    border: 1px solid #eee;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    height: 100%;
 }
 
-.album-item h4 {
+.album-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.album-header h4 {
+    margin: 0;
+    font-size: 16px;
     color: #333;
-    margin-bottom: 0.5rem;
-    font-size: 1.1rem;
 }
 
-.album-item p {
+.delete-x {
+    color: #ff0000;
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s ease;
+    margin-left: 10px;
+}
+
+.delete-x:hover {
+    color: #cc0000;
+}
+
+.delete-x:active {
+    color: #990000;
+}
+
+.album-content {
+    margin-top: 10px;
+}
+
+.album-content p {
+    margin: 3px 0;
     color: #666;
-    margin: 0.25rem 0;
-    font-size: 0.9rem;
+    font-size: 14px;
 }
 
-/* Estilos para los detalles del álbum */
 .album-details {
-    margin-top: 2rem;
-    padding-top: 2rem;
-    border-top: 1px solid #eee;
-}
-
-.album-details h3 {
-    color: #333;
-    margin-bottom: 1rem;
-    font-size: 1.2rem;
+    margin-top: 30px;
 }
 
 .album-detail-item {
-    background-color: #f8f9fa;
-    padding: 1.5rem;
-    border-radius: 4px;
-    border: 1px solid #eee;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .album-detail-item h4 {
-    color: #333;
-    margin-bottom: 1rem;
-    font-size: 1.3rem;
-}
-
-.album-detail-item p {
-    color: #666;
-    margin: 0.5rem 0;
-    font-size: 1rem;
+    margin-top: 0;
+    margin-bottom: 15px;
 }
 
 @media (max-width: 768px) {
@@ -146,5 +146,22 @@
 
     #albums-container {
         grid-template-columns: 1fr;
+        padding: 10px;
     }
+}
+
+.section {
+    margin-bottom: 30px;
+}
+
+.section-header {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.section-header h3 {
+    margin: 0;
 } 

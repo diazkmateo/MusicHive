@@ -4,7 +4,7 @@
         <title>MusicHive - Gestión de Canciones</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" type="text/css" href="/front-end/styles/main.css">
-        <link rel="stylesheet" type="text/css" href="/front-end/styles/cancion.css">
+        <link rel="stylesheet" type="text/css" href="/front-end/music/cancion.css">
     </head>
 
     <body>
@@ -17,10 +17,10 @@
 
             <section class="cancion-section">
                 <h2>Crear Canción</h2>
-                <form action="http://localhost:8000/cancion/create" method="post" enctype="multipart/form-data" class="cancion-form">
+                <form id="create-cancion-form" class="cancion-form">
                     <div class="form-group">
-                        <label for="titulo">Título de la Canción</label>
-                        <input type="text" id="titulo" name="titulo" required>
+                        <label for="nombre_cancion">Nombre de la Canción</label>
+                        <input type="text" id="nombre_cancion" name="nombre_cancion" required>
                     </div>
 
                     <div class="form-group">
@@ -29,12 +29,22 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="duracion">Duración (en segundos)</label>
-                        <input type="number" id="duracion" name="duracion" required>
+                        <label for="duracion_segundos">Duración (segundos)</label>
+                        <input type="number" id="duracion_segundos" name="duracion_segundos" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="numero_pista">Número de Pista</label>
+                        <input type="number" id="numero_pista" name="numero_pista" required>
                     </div>
 
                     <button type="submit">Crear Canción</button>
                 </form>
+            </section>
+
+            <section class="cancion-section">
+                <h2>Canciones Creadas</h2>
+                <div id="canciones-container"></div>
             </section>
 
             <section class="cancion-section">
@@ -46,15 +56,143 @@
                     </div>
                     <button type="submit">Obtener Canción</button>
                 </form>
+                <div id="cancion-details" class="cancion-details"></div>
             </section>
         </div>
 
         <script>
-            document.getElementById('get-cancion-form').addEventListener('submit', function(e) {
+            // Cargar todas las canciones al iniciar
+            window.addEventListener('load', cargarCanciones);
+
+            // Función para cargar todas las canciones
+            async function cargarCanciones() {
+                try {
+                    const response = await fetch('http://localhost:8000/cancion/');
+                    if (!response.ok) {
+                        throw new Error('Error al cargar canciones');
+                    }
+                    const canciones = await response.json();
+                    const container = document.getElementById('canciones-container');
+                    container.innerHTML = '';
+                    canciones.forEach(cancion => addCancionToList(cancion));
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al cargar canciones');
+                }
+            }
+
+            // Función para añadir canción a la lista
+            function addCancionToList(cancion) {
+                const container = document.getElementById('canciones-container');
+                const cancionElement = document.createElement('div');
+                cancionElement.className = 'cancion-item';
+                cancionElement.innerHTML = `
+                    <div class="cancion-header">
+                        <h4>${cancion.nombre_cancion}</h4>
+                        <span class="delete-x" onclick="borrarCancion(${cancion.id})">×</span>
+                    </div>
+                    <div class="cancion-content">
+                        <p><strong>ID:</strong> ${cancion.id}</p>
+                        <p><strong>Álbum ID:</strong> ${cancion.album_id}</p>
+                        <p><strong>Duración:</strong> ${cancion.duracion_segundos} segundos</p>
+                        <p><strong>Número de Pista:</strong> ${cancion.numero_pista}</p>
+                        ${cancion.album ? `<p><strong>Álbum:</strong> ${cancion.album.nombre_album}</p>` : ''}
+                    </div>
+                `;
+                container.appendChild(cancionElement);
+            }
+
+            // Función para crear canción
+            document.getElementById('create-cancion-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = {
+                    nombre_cancion: document.getElementById('nombre_cancion').value,
+                    album_id: parseInt(document.getElementById('album_id').value),
+                    duracion_segundos: parseInt(document.getElementById('duracion_segundos').value),
+                    numero_pista: parseInt(document.getElementById('numero_pista').value)
+                };
+
+                try {
+                    const response = await fetch('http://localhost:8000/cancion/create', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.detail || 'Error al crear canción');
+                    }
+
+                    document.getElementById('create-cancion-form').reset();
+                    cargarCanciones(); // Recargar la lista de canciones
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert(error.message || 'Error al crear canción');
+                }
+            });
+
+            // Función para obtener canción por ID
+            document.getElementById('get-cancion-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const cancion_id = document.getElementById('cancion_id').value;
-                window.location.href = `http://localhost:8000/cancion/${cancion_id}`;
+                try {
+                    const response = await fetch(`http://localhost:8000/cancion/${cancion_id}`);
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.detail || 'Error al obtener canción');
+                    }
+                    const cancion = await response.json();
+                    mostrarDetallesCancion(cancion);
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert(error.message || 'Error al obtener canción');
+                }
             });
+
+            // Función para mostrar detalles de la canción
+            function mostrarDetallesCancion(cancion) {
+                const detailsContainer = document.getElementById('cancion-details');
+                detailsContainer.innerHTML = `
+                    <div class="cancion-detail-item">
+                        <h4>Detalles de la Canción</h4>
+                        <p><strong>ID:</strong> ${cancion.id}</p>
+                        <p><strong>Nombre:</strong> ${cancion.nombre_cancion}</p>
+                        <p><strong>Álbum ID:</strong> ${cancion.album_id}</p>
+                        <p><strong>Duración:</strong> ${cancion.duracion_segundos} segundos</p>
+                        <p><strong>Número de Pista:</strong> ${cancion.numero_pista}</p>
+                        ${cancion.album ? `
+                            <h5>Información del Álbum:</h5>
+                            <p><strong>Nombre:</strong> ${cancion.album.nombre_album}</p>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            // Función para borrar canción
+            async function borrarCancion(id) {
+                if (!confirm('¿Estás seguro de que quieres borrar esta canción?')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`http://localhost:8000/cancion/${id}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Error al borrar canción');
+                    }
+
+                    alert('Canción borrada exitosamente');
+                    cargarCanciones(); // Recargar la lista de canciones
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al borrar canción');
+                }
+            }
         </script>
     </body>
 </html>
