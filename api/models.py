@@ -3,7 +3,6 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
 
-
 ### music models
 class Album(Base):
     __tablename__ = "album"

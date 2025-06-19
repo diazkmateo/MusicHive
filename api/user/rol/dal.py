@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from api import models
-import schemas
+import models
+from user.rol import schemas
 
 
 async def create_rol(db: AsyncSession, rol: schemas.RolCreateRequest) -> models.Rol:

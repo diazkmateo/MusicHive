@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
-from api import models
-import schemas
+import models
+from music.album import schemas
 
 async def create_album(db: AsyncSession, album: schemas.AlbumCreateRequest) -> models.Album:
     nuevo_album = models.Album(
