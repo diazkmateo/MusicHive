@@ -26,3 +26,15 @@ async def obtener_artista(
     if artista is None:
         raise HTTPException(status_code=404, detail="Artista no encontrado")
     return artista
+
+
+@router.get("/", response_model=list[schemas.ArtistaResponse])
+async def obtener_todos_artistas(db: AsyncSession = Depends(get_db)):
+    artistas = await dal.select_all_artistas(db)
+    return artistas
+
+
+@router.delete("/{artista_id}", status_code=204)
+async def borrar_artista(artista_id: int, db: AsyncSession = Depends(get_db)):
+    await dal.delete_artista(db, artista_id)
+    return {"detail": "Artista eliminado"}

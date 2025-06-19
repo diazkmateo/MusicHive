@@ -29,3 +29,15 @@ async def select_usuario(db: AsyncSession, usuario_id: int) -> models.Usuario | 
         )
     )
     return result.scalar_one_or_none()
+
+async def select_all_usuarios(db: AsyncSession):
+    result = await db.execute(select(models.Usuario))
+    return result.scalars().all()
+
+async def delete_usuario(db: AsyncSession, usuario_id: int) -> bool:
+    obj = await select_usuario(db, usuario_id)
+    if obj is None:
+        return False
+    await db.delete(obj)
+    await db.commit()
+    return True

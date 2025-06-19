@@ -22,7 +22,7 @@ async def select_genero(db: AsyncSession, genero_id: int) -> models.Genero | Non
     )
     return result.scalar_one_or_none()
 
-async def delete_genero(db: AsyncSession, genero_id: int) -> None:
+async def delete_genero(db: AsyncSession, genero_id: int) -> bool:
     result = await db.execute(
         select(models.Genero).where(models.Genero.id == genero_id)
     )
@@ -30,6 +30,8 @@ async def delete_genero(db: AsyncSession, genero_id: int) -> None:
     if genero:
         await db.delete(genero)
         await db.commit()
+        return True
+    return False
 
 async def update_genero(db: AsyncSession, genero_id: int, genero_data: schemas.GeneroUpdateRequest) -> models.Genero | None:
     result = await db.execute(
@@ -46,3 +48,12 @@ async def update_genero(db: AsyncSession, genero_id: int, genero_data: schemas.G
     await db.commit()
     await db.refresh(genero)
     return genero
+
+async def select_all_generos(db: AsyncSession):
+    result = await db.execute(
+        select(models.Genero).options(
+            selectinload(models.Genero.artistas_asociados),
+            selectinload(models.Genero.albums)
+        )
+    )
+    return result.scalars().all()

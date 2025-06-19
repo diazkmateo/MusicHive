@@ -30,3 +30,17 @@ async def select_coleccion_cancion(
         )
     )
     return result.scalar_one_or_none()
+
+
+async def select_all_coleccion_cancion(db: AsyncSession):
+    result = await db.execute(select(models.ColeccionCanciones))
+    return result.scalars().all()
+
+
+async def delete_coleccion_cancion(db: AsyncSession, asociacion_id: int) -> bool:
+    obj = await select_coleccion_cancion(db, asociacion_id)
+    if obj is None:
+        return False
+    await db.delete(obj)
+    await db.commit()
+    return True

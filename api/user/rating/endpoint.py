@@ -26,3 +26,15 @@ async def obtener_rating(
     if rating is None:
         raise HTTPException(status_code=404, detail="Rating no encontrado")
     return rating
+
+
+@router.get("/", response_model=list[RatingResponse])
+async def obtener_todos_ratings(db: AsyncSession = Depends(get_db)):
+    ratings = await dal.select_all_ratings(db)
+    return ratings
+
+
+@router.delete("/{rating_id}", status_code=204)
+async def borrar_rating(rating_id: int, db: AsyncSession = Depends(get_db)):
+    await dal.delete_rating(db, rating_id)
+    return {"detail": "Rating eliminado"}

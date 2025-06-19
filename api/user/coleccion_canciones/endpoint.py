@@ -26,3 +26,16 @@ async def obtener_coleccion_cancion(
     if asociacion is None:
         raise HTTPException(status_code=404, detail="Asociación no encontrada")
     return asociacion
+
+
+@router.get("/", response_model=list[ColeccionCancionesResponse])
+async def obtener_todas_coleccion_cancion(db: AsyncSession = Depends(get_db)):
+    return await dal.select_all_coleccion_cancion(db)
+
+
+@router.delete("/{asociacion_id}", status_code=204)
+async def borrar_coleccion_cancion(asociacion_id: int, db: AsyncSession = Depends(get_db)):
+    deleted = await dal.delete_coleccion_cancion(db, asociacion_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Asociación no encontrada")
+    return None

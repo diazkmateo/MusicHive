@@ -14,8 +14,7 @@ async def crear_genero(
     nombre_genero: Annotated[str, Form(...)],
     db: AsyncSession = Depends(get_db)
 ):
-    genero_data = schemas.GeneroCreateRequest(nombre_genero=nombre_genero)
-    nuevo_genero = await dal.create_genero(db, genero_data)
+    nuevo_genero = await dal.create_genero(db, nombre_genero)
     return nuevo_genero
 
 
@@ -43,7 +42,12 @@ async def borrar_genero(
     genero_id: int,
     db: AsyncSession = Depends(get_db)
 ):
-    genero = await dal.delete_genero(db, genero_id)
-    if genero is None:
+    borrado = await dal.delete_genero(db, genero_id)
+    if not borrado:
         raise HTTPException(status_code=404, detail="Genero no encontrado")
     return "Género borrado con éxito"
+
+@router.get("/", response_model=list[schemas.GeneroResponse])
+async def obtener_todos_generos(db: AsyncSession = Depends(get_db)):
+    generos = await dal.select_all_generos(db)
+    return generos

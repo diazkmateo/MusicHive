@@ -17,3 +17,8 @@ async def select_rol(db: AsyncSession, rol_id: int) -> models.Rol | None:
         select(models.Rol).where(models.Rol.id == rol_id)
     )
     return result.scalar_one_or_none()
+
+
+async def select_all_roles(db: AsyncSession):
+    result = await db.execute(select(models.Rol))
+    return result.scalars().all()

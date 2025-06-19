@@ -3,8 +3,10 @@
     <head>
         <title>MusicHive - Gestión de Reviews</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" type="text/css" href="/front-end/styles/main.css">
+        <link rel="stylesheet" type="text/css" href="/front-end/main.css">
+        <link rel="stylesheet" type="text/css" href="/front-end/user/forms.css">
         <link rel="stylesheet" type="text/css" href="/front-end/styles/review.css">
+        <link rel="stylesheet" type="text/css" href="/front-end/user/review.css">
     </head>
 
     <body>
@@ -17,24 +19,34 @@
 
             <section class="review-section">
                 <h2>Crear Review</h2>
-                <form action="http://localhost:8000/review/create" method="post" enctype="multipart/form-data" class="review-form">
+                <form id="create-review-form" class="review-form">
+                    <div class="form-group">
+                        <label for="titulo_review">Título de la Review</label>
+                        <input type="text" id="titulo_review" name="titulo_review" maxlength="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nota_review">Nota de la Review (1-10)</label>
+                        <input type="number" id="nota_review" name="nota_review" min="1" max="10" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="texto_review">Texto de la Review</label>
+                        <textarea id="texto_review" name="texto_review" rows="4"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="album_id">ID del Álbum</label>
+                        <input type="number" id="album_id" name="album_id" required>
+                    </div>
                     <div class="form-group">
                         <label for="usuario_id">ID del Usuario</label>
                         <input type="number" id="usuario_id" name="usuario_id" required>
                     </div>
-
-                    <div class="form-group">
-                        <label for="cancion_id">ID de la Canción</label>
-                        <input type="number" id="cancion_id" name="cancion_id" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="contenido">Contenido de la Review</label>
-                        <textarea id="contenido" name="contenido" rows="4" required></textarea>
-                    </div>
-
                     <button type="submit">Crear Review</button>
                 </form>
+            </section>
+
+            <section class="review-section">
+                <h2>Reviews Creadas</h2>
+                <div id="reviews-container" class="ratings-list"></div>
             </section>
 
             <section class="review-section">
@@ -46,15 +58,118 @@
                     </div>
                     <button type="submit">Obtener Review</button>
                 </form>
+                <div id="review-details" class="rating-details"></div>
             </section>
         </div>
 
         <script>
-            document.getElementById('get-review-form').addEventListener('submit', function(e) {
+            window.addEventListener('load', cargarReviews);
+
+            async function cargarReviews() {
+                try {
+                    const response = await fetch('http://localhost:8000/review/');
+                    if (!response.ok) throw new Error('Error al cargar reviews');
+                    const reviews = await response.json();
+                    const container = document.getElementById('reviews-container');
+                    container.innerHTML = '';
+                    reviews.forEach(review => addReviewToList(review));
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al cargar reviews');
+                }
+            }
+
+            function addReviewToList(review) {
+                const container = document.getElementById('reviews-container');
+                const reviewElement = document.createElement('div');
+                reviewElement.className = 'rating-item';
+                reviewElement.innerHTML = `
+                    <div class="rating-header">
+                        <h4>${review.titulo_review}</h4>
+                        <span onclick="borrarReview(${review.id})" class="delete-x" title="Borrar review">×</span>
+                    </div>
+                    <div class="rating-content">
+                        <p><strong>ID:</strong> ${review.id}</p>
+                        <p><strong>Título:</strong> ${review.titulo_review}</p>
+                        <p><strong>Nota:</strong> ${review.nota_review}</p>
+                        <p><strong>Texto:</strong> ${review.texto_review ? review.texto_review : '-'}</p>
+                        <p><strong>ID Álbum:</strong> ${review.album_id}</p>
+                        <p><strong>ID Usuario:</strong> ${review.usuario_id}</p>
+                    </div>
+                `;
+                container.appendChild(reviewElement);
+            }
+
+            document.getElementById('create-review-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = {
+                    titulo_review: document.getElementById('titulo_review').value,
+                    nota_review: parseInt(document.getElementById('nota_review').value),
+                    texto_review: document.getElementById('texto_review').value,
+                    album_id: parseInt(document.getElementById('album_id').value),
+                    usuario_id: parseInt(document.getElementById('usuario_id').value)
+                };
+                try {
+                    const response = await fetch('http://localhost:8000/review/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+                    if (!response.ok) throw new Error('Error al crear review');
+                    alert('Review creada exitosamente');
+                    document.getElementById('create-review-form').reset();
+                    cargarReviews();
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al crear review');
+                }
+            });
+
+            document.getElementById('get-review-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const review_id = document.getElementById('review_id').value;
-                window.location.href = `http://localhost:8000/review/${review_id}`;
+                try {
+                    const response = await fetch(`http://localhost:8000/review/${review_id}`);
+                    if (!response.ok) throw new Error('Review no encontrada');
+                    const review = await response.json();
+                    mostrarDetallesReview(review);
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al obtener review');
+                }
             });
+
+            function mostrarDetallesReview(review) {
+                const detailsContainer = document.getElementById('review-details');
+                detailsContainer.innerHTML = `
+                    <div class="rating-detail-item">
+                        <h4>Detalles de la Review</h4>
+                        <p><strong>ID:</strong> ${review.id}</p>
+                        <p><strong>Título:</strong> ${review.titulo_review}</p>
+                        <p><strong>Nota:</strong> ${review.nota_review}</p>
+                        <p><strong>Texto:</strong> ${review.texto_review || ''}</p>
+                        <p><strong>ID Álbum:</strong> ${review.album_id}</p>
+                        <p><strong>ID Usuario:</strong> ${review.usuario_id}</p>
+                    </div>
+                `;
+            }
+
+            async function borrarReview(id) {
+                if (!confirm('¿Estás seguro de que quieres borrar esta review?')) return;
+                try {
+                    const response = await fetch(`http://localhost:8000/review/${id}`, {
+                        method: 'DELETE'
+                    });
+                    if (!response.ok) throw new Error('Error al borrar review');
+                    alert('Review borrada exitosamente');
+                    cargarReviews();
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al borrar review');
+                }
+            }
         </script>
     </body>
 </html>

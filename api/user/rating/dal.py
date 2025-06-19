@@ -21,3 +21,16 @@ async def select_rating(db: AsyncSession, rating_id: int) -> models.Rating | Non
         select(models.Rating).where(models.Rating.id == rating_id)
     )
     return result.scalar_one_or_none()
+
+
+async def select_all_ratings(db: AsyncSession):
+    result = await db.execute(select(models.Rating))
+    return result.scalars().all()
+
+
+async def delete_rating(db: AsyncSession, rating_id: int) -> None:
+    result = await db.execute(select(models.Rating).where(models.Rating.id == rating_id))
+    rating = result.scalar_one_or_none()
+    if rating:
+        await db.delete(rating)
+        await db.commit()

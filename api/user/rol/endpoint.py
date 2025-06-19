@@ -25,3 +25,8 @@ async def obtener_rol(
     if rol is None:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
     return rol
+
+
+@router.get("/", response_model=list[schemas.RolResponse])
+async def obtener_todos_roles(db: AsyncSession = Depends(get_db)):
+    return await dal.select_all_roles(db)

@@ -3,8 +3,9 @@
     <head>
         <title>MusicHive - Gestión de Usuarios</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" type="text/css" href="/front-end/styles/main.css">
-        <link rel="stylesheet" type="text/css" href="/front-end/styles/usuario.css">
+        <link rel="stylesheet" type="text/css" href="/front-end/main.css">
+        <link rel="stylesheet" type="text/css" href="/front-end/user/usuario.css">
+        <!-- <link rel="stylesheet" type="text/css" href="/front-end/user/forms.css"> -->
     </head>
 
     <body>
@@ -17,26 +18,30 @@
 
             <section class="usuario-section">
                 <h2>Crear Usuario</h2>
-                <form action="http://localhost:8000/usuario/create" method="post" enctype="multipart/form-data" class="usuario-form">
+                <form id="create-usuario-form" class="usuario-form">
                     <div class="form-group">
-                        <label for="nombre">Nombre de Usuario</label>
-                        <input type="text" id="nombre" name="nombre" required>
+                        <label for="nombre_usuario">Nombre de Usuario</label>
+                        <input type="text" id="nombre_usuario" name="nombre_usuario" required>
                     </div>
-
                     <div class="form-group">
                         <label for="email">Correo Electrónico</label>
                         <input type="email" id="email" name="email" required>
                     </div>
-
                     <div class="form-group">
-                        <label for="password">Contraseña</label>
-                        <input type="password" id="password" name="password" required>
+                        <label for="contrasena">Contraseña</label>
+                        <input type="password" id="contrasena" name="contrasena" required>
                     </div>
-
+                    <div class="form-group">
+                        <label for="rol_id">Rol</label>
+                        <select id="rol_id" name="rol_id" required></select>
+                    </div>
                     <button type="submit">Crear Usuario</button>
                 </form>
             </section>
-
+            <section class="usuario-section">
+                <h2>Usuarios Creados</h2>
+                <div id="usuarios-container" class="ratings-list"></div>
+            </section>
             <section class="usuario-section">
                 <h2>Obtener Usuario</h2>
                 <form id="get-usuario-form" class="usuario-form">
@@ -46,15 +51,143 @@
                     </div>
                     <button type="submit">Obtener Usuario</button>
                 </form>
+                <div id="usuario-details" class="rating-details"></div>
             </section>
         </div>
 
         <script>
-            document.getElementById('get-usuario-form').addEventListener('submit', function(e) {
+            window.addEventListener('DOMContentLoaded', () => {
+                cargarRoles();
+                cargarUsuarios();
+            });
+
+            async function cargarRoles() {
+                try {
+                    const response = await fetch('http://localhost:8000/rol/');
+                    if (!response.ok) throw new Error('Error al cargar roles');
+                    const roles = await response.json();
+                    const select = document.getElementById('rol_id');
+                    select.innerHTML = '';
+                    if (roles.length === 0) {
+                        // Si no hay roles en la base, agrego mock
+                        select.innerHTML = `
+                            <option value="1">admin (mock)</option>
+                            <option value="2">normal (mock)</option>
+                        `;
+                    } else {
+                        roles.forEach(rol => {
+                            const option = document.createElement('option');
+                            option.value = rol.id;
+                            option.textContent = rol.nombre_rol;
+                            select.appendChild(option);
+                        });
+                    }
+                } catch (error) {
+                    // Si falla la API, agrego mock
+                    const select = document.getElementById('rol_id');
+                    select.innerHTML = `
+                        <option value="1">admin (mock)</option>
+                        <option value="2">normal (mock)</option>
+                    `;
+                }
+            }
+
+            async function cargarUsuarios() {
+                try {
+                    const response = await fetch('http://localhost:8000/usuario/');
+                    if (!response.ok) throw new Error('Error al cargar usuarios');
+                    const usuarios = await response.json();
+                    const container = document.getElementById('usuarios-container');
+                    container.innerHTML = '';
+                    usuarios.forEach(usuario => addUsuarioToList(usuario));
+                } catch (error) {
+                    alert('Error al cargar usuarios');
+                }
+            }
+
+            function addUsuarioToList(usuario) {
+                const container = document.getElementById('usuarios-container');
+                const usuarioElement = document.createElement('div');
+                usuarioElement.className = 'rating-item';
+                usuarioElement.innerHTML = `
+                    <div class="rating-header">
+                        <h4>${usuario.nombre_usuario}</h4>
+                        <span onclick="borrarUsuario(${usuario.id})" class="delete-x" title="Borrar usuario">×</span>
+                    </div>
+                    <div class="rating-content">
+                        <p><strong>ID:</strong> ${usuario.id}</p>
+                        <p><strong>Email:</strong> ${usuario.email}</p>
+                        <p><strong>Rol ID:</strong> ${usuario.rol_id}</p>
+                    </div>
+                `;
+                container.appendChild(usuarioElement);
+            }
+
+            async function borrarUsuario(id) {
+                if (!confirm('¿Estás seguro de que quieres borrar este usuario?')) return;
+                try {
+                    const response = await fetch(`http://localhost:8000/usuario/${id}`, {
+                        method: 'DELETE'
+                    });
+                    if (!response.ok) throw new Error('Error al borrar usuario');
+                    alert('Usuario borrado exitosamente');
+                    cargarUsuarios();
+                } catch (error) {
+                    alert('Error al borrar usuario');
+                }
+            }
+
+            document.getElementById('create-usuario-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = {
+                    nombre_usuario: document.getElementById('nombre_usuario').value,
+                    contrasena_hash: document.getElementById('contrasena').value,
+                    email: document.getElementById('email').value,
+                    rol_id: parseInt(document.getElementById('rol_id').value)
+                };
+                try {
+                    const response = await fetch('http://localhost:8000/usuario/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+                    if (!response.ok) throw new Error('Error al crear usuario');
+                    alert('Usuario creado exitosamente');
+                    document.getElementById('create-usuario-form').reset();
+                    cargarUsuarios();
+                } catch (error) {
+                    alert('Error al crear usuario');
+                }
+            });
+
+            document.getElementById('get-usuario-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const usuario_id = document.getElementById('usuario_id').value;
-                window.location.href = `http://localhost:8000/usuario/${usuario_id}`;
+                try {
+                    const response = await fetch(`http://localhost:8000/usuario/${usuario_id}`);
+                    if (!response.ok) throw new Error('Usuario no encontrado');
+                    const usuario = await response.json();
+                    mostrarDetallesUsuario(usuario);
+                } catch (error) {
+                    document.getElementById('usuario-details').innerHTML = '';
+                    alert('Error al obtener usuario');
+                }
             });
+
+            function mostrarDetallesUsuario(usuario) {
+                const detailsContainer = document.getElementById('usuario-details');
+                detailsContainer.innerHTML = `
+                    <div class="rating-detail-item">
+                        <h4>Detalles del Usuario</h4>
+                        <p><strong>ID:</strong> ${usuario.id}</p>
+                        <p><strong>Nombre de Usuario:</strong> ${usuario.nombre_usuario}</p>
+                        <p><strong>Email:</strong> ${usuario.email}</p>
+                        <p><strong>Rol ID:</strong> ${usuario.rol_id}</p>
+                    </div>
+                `;
+            }
         </script>
     </body>
 </html>

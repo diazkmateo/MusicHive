@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>MusicHive - Gestión de Colecciones</title>
+        <title>MusicHive - Gestión de Colección-Canciones</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" type="text/css" href="/front-end/styles/main.css">
-        <link rel="stylesheet" type="text/css" href="/front-end/styles/coleccion.css">
+        <link rel="stylesheet" type="text/css" href="/front-end/main.css">
+        <link rel="stylesheet" type="text/css" href="/front-end/user/coleccion.css">
     </head>
 
     <body>
@@ -15,46 +15,138 @@
         <div class="container">
             <a href="/front-end/index.html" class="back-link">← Volver al inicio</a>
 
-            <section class="coleccion-section">
-                <h2>Crear Colección</h2>
-                <form action="http://localhost:8000/coleccion/create" method="post" enctype="multipart/form-data" class="coleccion-form">
-                    <div class="form-group">
-                        <label for="usuario_id">ID del Usuario</label>
-                        <input type="number" id="usuario_id" name="usuario_id" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="nombre">Nombre de la Colección</label>
-                        <input type="text" id="nombre" name="nombre" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="descripcion">Descripción</label>
-                        <textarea id="descripcion" name="descripcion" rows="4"></textarea>
-                    </div>
-
-                    <button type="submit">Crear Colección</button>
-                </form>
-            </section>
-
-            <section class="coleccion-section">
-                <h2>Obtener Colección</h2>
-                <form id="get-coleccion-form" class="coleccion-form">
+            <section class="rating-section">
+                <h2>Crear Relación Colección-Canción</h2>
+                <form id="create-coleccion-cancion-form" class="rating-form">
                     <div class="form-group">
                         <label for="coleccion_id">ID de la Colección</label>
                         <input type="number" id="coleccion_id" name="coleccion_id" required>
                     </div>
-                    <button type="submit">Obtener Colección</button>
+                    <div class="form-group">
+                        <label for="cancion_id">ID de la Canción</label>
+                        <input type="number" id="cancion_id" name="cancion_id" required>
+                    </div>
+                    <button type="submit">Crear Relación</button>
                 </form>
+            </section>
+
+            <section class="rating-section">
+                <h2>Colección-Canciones Creadas</h2>
+                <div id="coleccion-canciones-container" class="ratings-list"></div>
+            </section>
+
+            <section class="rating-section">
+                <h2>Obtener Relación Colección-Canción</h2>
+                <form id="get-coleccion-cancion-form" class="rating-form">
+                    <div class="form-group">
+                        <label for="relacion_id">ID de la Relación</label>
+                        <input type="number" id="relacion_id" name="relacion_id" required>
+                    </div>
+                    <button type="submit">Obtener Relación</button>
+                </form>
+                <div id="coleccion-cancion-details" class="rating-details"></div>
             </section>
         </div>
 
         <script>
-            document.getElementById('get-coleccion-form').addEventListener('submit', function(e) {
+            window.addEventListener('load', cargarColeccionCanciones);
+
+            async function cargarColeccionCanciones() {
+                try {
+                    const response = await fetch('http://localhost:8000/coleccion_canciones/');
+                    if (!response.ok) throw new Error('Error al cargar relaciones');
+                    const relaciones = await response.json();
+                    const container = document.getElementById('coleccion-canciones-container');
+                    container.innerHTML = '';
+                    relaciones.forEach(rel => addColeccionCancionToList(rel));
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al cargar relaciones');
+                }
+            }
+
+            function addColeccionCancionToList(rel) {
+                const container = document.getElementById('coleccion-canciones-container');
+                const relElement = document.createElement('div');
+                relElement.className = 'rating-item';
+                relElement.innerHTML = `
+                    <div class="rating-header">
+                        <h4>${rel.id}</h4>
+                        <span onclick="borrarColeccionCancion(${rel.id})" class="delete-x" title="Borrar relación">×</span>
+                    </div>
+                    <div class="rating-content">
+                        <p><strong>ID Relación:</strong> ${rel.id}</p>
+                        <p><strong>ID Colección:</strong> ${rel.coleccion_id}</p>
+                        <p><strong>ID Canción:</strong> ${rel.cancion_id}</p>
+                    </div>
+                `;
+                container.appendChild(relElement);
+            }
+
+            document.getElementById('create-coleccion-cancion-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
-                const coleccion_id = document.getElementById('coleccion_id').value;
-                window.location.href = `http://localhost:8000/coleccion/${coleccion_id}`;
+                const formData = {
+                    coleccion_id: parseInt(document.getElementById('coleccion_id').value),
+                    cancion_id: parseInt(document.getElementById('cancion_id').value)
+                };
+                try {
+                    const response = await fetch('http://localhost:8000/coleccion_canciones/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+                    if (!response.ok) throw new Error('Error al crear relación');
+                    alert('Relación creada exitosamente');
+                    document.getElementById('create-coleccion-cancion-form').reset();
+                    cargarColeccionCanciones();
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al crear relación');
+                }
             });
+
+            async function borrarColeccionCancion(id) {
+                if (!confirm('¿Estás seguro de que quieres borrar esta relación?')) return;
+                try {
+                    const response = await fetch(`http://localhost:8000/coleccion_canciones/${id}`, {
+                        method: 'DELETE'
+                    });
+                    if (!response.ok) throw new Error('Error al borrar relación');
+                    alert('Relación borrada exitosamente');
+                    cargarColeccionCanciones();
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al borrar relación');
+                }
+            }
+
+            document.getElementById('get-coleccion-cancion-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const id = document.getElementById('relacion_id').value;
+                try {
+                    const response = await fetch(`http://localhost:8000/coleccion_canciones/${id}`);
+                    if (!response.ok) throw new Error('Relación no encontrada');
+                    const rel = await response.json();
+                    mostrarDetallesRelacion(rel);
+                } catch (error) {
+                    document.getElementById('coleccion-cancion-details').innerHTML = '';
+                    alert('Error al obtener relación');
+                }
+            });
+
+            function mostrarDetallesRelacion(rel) {
+                const detailsContainer = document.getElementById('coleccion-cancion-details');
+                detailsContainer.innerHTML = `
+                    <div class="rating-detail-item">
+                        <h4>Detalles de la Relación</h4>
+                        <p><strong>ID Relación:</strong> ${rel.id}</p>
+                        <p><strong>ID Colección:</strong> ${rel.coleccion_id}</p>
+                        <p><strong>ID Canción:</strong> ${rel.cancion_id}</p>
+                    </div>
+                `;
+            }
         </script>
     </body>
 </html>

@@ -5,9 +5,7 @@ from datetime import date
 # REQUEST
 
 class RatingCreateRequest(BaseModel):
-    id: int
     puntuacion: int
-    fecha_creacion: date
     usuario_id: int
     album_id: int
 

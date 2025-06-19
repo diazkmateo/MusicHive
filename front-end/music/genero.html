@@ -3,7 +3,7 @@
     <head>
         <title>MusicHive - Gestión de Géneros</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" type="text/css" href="/front-end/styles/main.css">
+        <link rel="stylesheet" type="text/css" href="/front-end/main.css">
         <link rel="stylesheet" type="text/css" href="/front-end/music/genero.css">
     </head>
 
@@ -19,15 +19,9 @@
                 <h2>Crear Género</h2>
                 <form id="create-genero-form" class="genero-form">
                     <div class="form-group">
-                        <label for="nombre">Nombre del Género</label>
-                        <input type="text" id="nombre" name="nombre" required>
+                        <label for="nombre_genero">Nombre del Género</label>
+                        <input type="text" id="nombre_genero" name="nombre_genero" required>
                     </div>
-
-                    <div class="form-group">
-                        <label for="descripcion">Descripción</label>
-                        <textarea id="descripcion" name="descripcion" rows="4"></textarea>
-                    </div>
-
                     <button type="submit">Crear Género</button>
                 </form>
             </section>
@@ -78,12 +72,11 @@
                 generoElement.className = 'genero-item';
                 generoElement.innerHTML = `
                     <div class="genero-header">
-                        <h4>${genero.nombre}</h4>
+                        <h4>${genero.nombre_genero}</h4>
                         <span class="delete-x" onclick="borrarGenero(${genero.id})">×</span>
                     </div>
                     <div class="genero-content">
                         <p><strong>ID:</strong> ${genero.id}</p>
-                        <p><strong>Descripción:</strong> ${genero.descripcion || 'No disponible'}</p>
                     </div>
                 `;
                 container.appendChild(generoElement);
@@ -92,24 +85,16 @@
             // Función para crear género
             document.getElementById('create-genero-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
-                const formData = {
-                    nombre: document.getElementById('nombre').value,
-                    descripcion: document.getElementById('descripcion').value
-                };
-
+                const formData = new FormData();
+                formData.append('nombre_genero', document.getElementById('nombre_genero').value);
                 try {
                     const response = await fetch('http://localhost:8000/genero/create', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(formData)
+                        body: formData
                     });
-
                     if (!response.ok) {
                         throw new Error('Error al crear género');
                     }
-
                     const data = await response.json();
                     alert('Género creado exitosamente');
                     document.getElementById('create-genero-form').reset();
@@ -144,8 +129,7 @@
                     <div class="genero-detail-item">
                         <h4>Detalles del Género</h4>
                         <p><strong>ID:</strong> ${genero.id}</p>
-                        <p><strong>Nombre:</strong> ${genero.nombre}</p>
-                        <p><strong>Descripción:</strong> ${genero.descripcion || 'No disponible'}</p>
+                        <p><strong>Nombre:</strong> ${genero.nombre_genero}</p>
                     </div>
                 `;
             }
@@ -155,16 +139,13 @@
                 if (!confirm('¿Estás seguro de que quieres borrar este género?')) {
                     return;
                 }
-
                 try {
-                    const response = await fetch(`http://localhost:8000/genero/${id}`, {
-                        method: 'DELETE'
+                    const response = await fetch(`http://localhost:8000/genero/delete/${id}`, {
+                        method: 'POST'
                     });
-
                     if (!response.ok) {
                         throw new Error('Error al borrar género');
                     }
-
                     alert('Género borrado exitosamente');
                     cargarGeneros(); // Recargar la lista de géneros
                 } catch (error) {
