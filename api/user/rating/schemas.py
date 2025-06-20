@@ -1,12 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import date
 
 # REQUEST
 
 class RatingCreateRequest(BaseModel):
-    puntuacion: int
-    usuario_id: int
+    puntuacion: int = Field(..., gt=0, le=5)
     album_id: int
 
 # RESPONSE
@@ -19,4 +18,4 @@ class RatingResponse(BaseModel):
     album_id: int
 
     class Config:
-        orm_mode = True  
+        from_attributes = True  

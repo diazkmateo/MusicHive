@@ -144,7 +144,7 @@ class Review(Base):
 class Rol(Base):
     __tablename__ = "rol"
 
-    id = Column(SmallInteger, primary_key=True, index=True, name="id_rol")
+    id = Column(Integer, primary_key=True, index=True, name="id_rol", autoincrement=True)
     nombre_rol = Column(String(50), unique=True, nullable=False)
 
     usuarios = relationship("Usuario", back_populates="rol")
@@ -158,7 +158,7 @@ class Usuario(Base):
     nombre_usuario = Column(String(20), nullable=False, unique=True)
     contrasena_hash = Column(String, nullable=False, name="contrasena_usuario")
     email = Column(String(50), unique=True, index=True, nullable=False)
-    rol_id = Column(SmallInteger, ForeignKey("rol.id_rol"), nullable=False)
+    rol_id = Column(Integer, ForeignKey("rol.id_rol"), nullable=False)
 
     rol = relationship("Rol", back_populates="usuarios")
         

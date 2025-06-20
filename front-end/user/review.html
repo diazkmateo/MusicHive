@@ -4,8 +4,6 @@
         <title>MusicHive - Gestión de Reviews</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" type="text/css" href="/front-end/main.css">
-        <link rel="stylesheet" type="text/css" href="/front-end/user/forms.css">
-        <link rel="stylesheet" type="text/css" href="/front-end/styles/review.css">
         <link rel="stylesheet" type="text/css" href="/front-end/user/review.css">
     </head>
 
@@ -15,7 +13,7 @@
         </header>
 
         <div class="container">
-            <a href="/front-end/index.html" class="back-link">← Volver al inicio</a>
+            <a href="/front-end/dashboard.html" class="back-link">← Volver al dashboard</a>
 
             <section class="review-section">
                 <h2>Crear Review</h2>
@@ -46,7 +44,7 @@
 
             <section class="review-section">
                 <h2>Reviews Creadas</h2>
-                <div id="reviews-container" class="ratings-list"></div>
+                <div id="reviews-container"></div>
             </section>
 
             <section class="review-section">
@@ -58,17 +56,21 @@
                     </div>
                     <button type="submit">Obtener Review</button>
                 </form>
-                <div id="review-details" class="rating-details"></div>
+                <div id="review-details" class="review-details"></div>
             </section>
         </div>
 
         <script>
+            // Cargar todas las reviews al iniciar
             window.addEventListener('load', cargarReviews);
 
+            // Función para cargar todas las reviews
             async function cargarReviews() {
                 try {
                     const response = await fetch('http://localhost:8000/review/');
-                    if (!response.ok) throw new Error('Error al cargar reviews');
+                    if (!response.ok) {
+                        throw new Error('Error al cargar reviews');
+                    }
                     const reviews = await response.json();
                     const container = document.getElementById('reviews-container');
                     container.innerHTML = '';
@@ -79,19 +81,19 @@
                 }
             }
 
+            // Función para añadir review a la lista
             function addReviewToList(review) {
                 const container = document.getElementById('reviews-container');
                 const reviewElement = document.createElement('div');
-                reviewElement.className = 'rating-item';
+                reviewElement.className = 'review-item';
                 reviewElement.innerHTML = `
-                    <div class="rating-header">
+                    <div class="review-header">
                         <h4>${review.titulo_review}</h4>
-                        <span onclick="borrarReview(${review.id})" class="delete-x" title="Borrar review">×</span>
+                        <span class="delete-x" onclick="borrarReview(${review.id})">×</span>
                     </div>
-                    <div class="rating-content">
+                    <div class="review-content">
                         <p><strong>ID:</strong> ${review.id}</p>
-                        <p><strong>Título:</strong> ${review.titulo_review}</p>
-                        <p><strong>Nota:</strong> ${review.nota_review}</p>
+                        <p><strong>Nota:</strong> ${review.nota_review}/10</p>
                         <p><strong>Texto:</strong> ${review.texto_review ? review.texto_review : '-'}</p>
                         <p><strong>ID Álbum:</strong> ${review.album_id}</p>
                         <p><strong>ID Usuario:</strong> ${review.usuario_id}</p>
@@ -100,6 +102,7 @@
                 container.appendChild(reviewElement);
             }
 
+            // Función para crear review
             document.getElementById('create-review-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const formData = {
@@ -110,29 +113,36 @@
                     usuario_id: parseInt(document.getElementById('usuario_id').value)
                 };
                 try {
+                    const token = localStorage.getItem('jwt-token');
                     const response = await fetch('http://localhost:8000/review/', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
                         },
                         body: JSON.stringify(formData)
                     });
-                    if (!response.ok) throw new Error('Error al crear review');
+                    if (!response.ok) {
+                        throw new Error('Error al crear review');
+                    }
                     alert('Review creada exitosamente');
                     document.getElementById('create-review-form').reset();
-                    cargarReviews();
+                    cargarReviews(); // Recargar la lista de reviews
                 } catch (error) {
                     console.error('Error:', error);
                     alert('Error al crear review');
                 }
             });
 
+            // Función para obtener review por ID
             document.getElementById('get-review-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const review_id = document.getElementById('review_id').value;
                 try {
                     const response = await fetch(`http://localhost:8000/review/${review_id}`);
-                    if (!response.ok) throw new Error('Review no encontrada');
+                    if (!response.ok) {
+                        throw new Error('Review no encontrada');
+                    }
                     const review = await response.json();
                     mostrarDetallesReview(review);
                 } catch (error) {
@@ -141,14 +151,15 @@
                 }
             });
 
+            // Función para mostrar detalles de la review
             function mostrarDetallesReview(review) {
                 const detailsContainer = document.getElementById('review-details');
                 detailsContainer.innerHTML = `
-                    <div class="rating-detail-item">
+                    <div class="review-detail-item">
                         <h4>Detalles de la Review</h4>
                         <p><strong>ID:</strong> ${review.id}</p>
                         <p><strong>Título:</strong> ${review.titulo_review}</p>
-                        <p><strong>Nota:</strong> ${review.nota_review}</p>
+                        <p><strong>Nota:</strong> ${review.nota_review}/10</p>
                         <p><strong>Texto:</strong> ${review.texto_review || ''}</p>
                         <p><strong>ID Álbum:</strong> ${review.album_id}</p>
                         <p><strong>ID Usuario:</strong> ${review.usuario_id}</p>
@@ -156,15 +167,22 @@
                 `;
             }
 
+            // Función para borrar review
             async function borrarReview(id) {
-                if (!confirm('¿Estás seguro de que quieres borrar esta review?')) return;
+                if (!confirm('¿Estás seguro de que quieres borrar esta review?')) {
+                    return;
+                }
                 try {
+                    const token = localStorage.getItem('jwt-token');
                     const response = await fetch(`http://localhost:8000/review/${id}`, {
-                        method: 'DELETE'
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
                     });
-                    if (!response.ok) throw new Error('Error al borrar review');
+                    if (!response.ok) {
+                        throw new Error('Error al borrar review');
+                    }
                     alert('Review borrada exitosamente');
-                    cargarReviews();
+                    cargarReviews(); // Recargar la lista de reviews
                 } catch (error) {
                     console.error('Error:', error);
                     alert('Error al borrar review');

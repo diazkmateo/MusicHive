@@ -11,6 +11,11 @@ class UsuarioCreateRequest(BaseModel):
     rol_id: int  # SmallInteger en base de datos
 
 
+class UsuarioUpdateRequest(BaseModel):
+    rol_id: Optional[int] = None
+    # Aquí se podrían añadir otros campos que se quieran poder actualizar
+
+
 # RESPONSE
 class UsuarioResponse(BaseModel):
     id: int

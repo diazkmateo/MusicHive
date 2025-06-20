@@ -3,12 +3,16 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 import models
 from user.usuario import schemas
+from passlib.context import CryptContext
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-async def create_usuario(db: AsyncSession, usuario: schemas.UsuarioCreateRequest) -> models.Usuario:
+async def create_usuario(db: AsyncSession, usuario) -> models.Usuario:
+    # usuario puede ser UsuarioCreateRequest o UsuarioRegisterRequest
+    hashed_password = pwd_context.hash(usuario.contrasena if hasattr(usuario, 'contrasena') else usuario.contrasena_hash)
     nuevo_usuario = models.Usuario(
         nombre_usuario=usuario.nombre_usuario,
-        contrasena_hash=usuario.contrasena_hash,
+        contrasena_hash=hashed_password,
         email=usuario.email,
         rol_id=usuario.rol_id
     )
@@ -41,3 +45,15 @@ async def delete_usuario(db: AsyncSession, usuario_id: int) -> bool:
     await db.delete(obj)
     await db.commit()
     return True
+
+async def update_usuario(db: AsyncSession, usuario_id: int, usuario_data: schemas.UsuarioUpdateRequest) -> models.Usuario | None:
+    usuario = await select_usuario(db, usuario_id)
+    if usuario is None:
+        return None
+    
+    if usuario_data.rol_id is not None:
+        usuario.rol_id = usuario_data.rol_id
+    
+    await db.commit()
+    await db.refresh(usuario)
+    return usuario

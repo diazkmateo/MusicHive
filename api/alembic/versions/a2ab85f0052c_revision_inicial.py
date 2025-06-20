@@ -38,7 +38,7 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_genero_id_genero'), 'genero', ['id_genero'], unique=False)
     op.create_table('rol',
-    sa.Column('id_rol', sa.SmallInteger(), nullable=False),
+    sa.Column('id_rol', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('nombre_rol', sa.String(length=50), nullable=False),
     sa.PrimaryKeyConstraint('id_rol'),
     sa.UniqueConstraint('nombre_rol')
@@ -67,7 +67,7 @@ def upgrade() -> None:
     sa.Column('nombre_usuario', sa.String(length=20), nullable=False),
     sa.Column('contrasena_usuario', sa.String(), nullable=False),
     sa.Column('email', sa.String(length=50), nullable=False),
-    sa.Column('rol_id', sa.SmallInteger(), nullable=False),
+    sa.Column('rol_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['rol_id'], ['rol.id_rol'], ),
     sa.PrimaryKeyConstraint('id_usuario'),
     sa.UniqueConstraint('nombre_usuario')

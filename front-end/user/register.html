@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro - MusicHive</title>
+    <link rel="stylesheet" href="/front-end/main.css">
+    <link rel="stylesheet" href="/front-end/user/usuario.css">
+</head>
+<body>
+    <header>
+        <h1>MusicHive</h1>
+    </header>
+    <div class="container">
+        <div class="usuario-section">
+            <h2>Registro de Usuario</h2>
+            <form id="registerForm" class="usuario-form">
+                <div class="form-group">
+                    <label for="nombre_usuario">Usuario:</label>
+                    <input type="text" id="nombre_usuario" name="nombre_usuario" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="contrasena">Contraseña:</label>
+                    <input type="password" id="contrasena" name="contrasena" required>
+                </div>
+                <div class="form-group">
+                    <label for="contrasena2">Repetir Contraseña:</label>
+                    <input type="password" id="contrasena2" name="contrasena2" required>
+                </div>
+                <input type="hidden" id="rol_id" name="rol_id" value="2">
+                <button type="submit">Registrarse</button>
+            </form>
+            <p>¿Ya tienes cuenta? <a href="login.html">Inicia sesión aquí</a></p>
+            <div id="registerError" style="color:red;"></div>
+            <div id="registerSuccess" style="color:green;"></div>
+        </div>
+    </div>
+    <script>
+    document.getElementById('registerForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const nombre_usuario = document.getElementById('nombre_usuario').value;
+        const email = document.getElementById('email').value;
+        const contrasena = document.getElementById('contrasena').value;
+        const contrasena2 = document.getElementById('contrasena2').value;
+        const rol_id = parseInt(document.getElementById('rol_id').value);
+        if (contrasena !== contrasena2) {
+            document.getElementById('registerError').innerText = 'Las contraseñas no coinciden';
+            document.getElementById('registerSuccess').innerText = '';
+            return;
+        }
+        const res = await fetch('/auth/register', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({nombre_usuario, email, contrasena, rol_id})
+        });
+        if (res.ok) {
+            document.getElementById('registerSuccess').innerText = '¡Registro exitoso! Ahora puedes iniciar sesión.';
+            document.getElementById('registerError').innerText = '';
+        } else {
+            const data = await res.json();
+            document.getElementById('registerError').innerText = data.detail || 'Error en el registro';
+            document.getElementById('registerSuccess').innerText = '';
+        }
+    };
+    </script>
+</body>
+</html> 

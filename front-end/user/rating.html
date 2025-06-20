@@ -13,7 +13,7 @@
         </header>
 
         <div class="container">
-            <a href="/front-end/index.html" class="back-link">← Volver al inicio</a>
+            <a href="/front-end/dashboard.html" class="back-link">← Volver al dashboard</a>
 
             <section class="rating-section">
                 <h2>Crear Rating</h2>
@@ -56,7 +56,12 @@
             window.addEventListener('load', cargarRatings);
             async function cargarRatings() {
                 try {
-                    const response = await fetch('http://localhost:8000/rating/');
+                    const token = localStorage.getItem('jwt-token');
+                    const response = await fetch('http://localhost:8000/rating/', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
                     if (!response.ok) {
                         throw new Error('Error al cargar ratings');
                     }
@@ -96,10 +101,12 @@
                     album_id: parseInt(document.getElementById('album_id').value)
                 };
                 try {
+                    const token = localStorage.getItem('jwt-token');
                     const response = await fetch('http://localhost:8000/rating/', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
                         },
                         body: JSON.stringify(formData)
                     });
@@ -119,7 +126,12 @@
                 e.preventDefault();
                 const rating_id = document.getElementById('rating_id').value;
                 try {
-                    const response = await fetch(`http://localhost:8000/rating/${rating_id}`);
+                    const token = localStorage.getItem('jwt-token');
+                    const response = await fetch(`http://localhost:8000/rating/${rating_id}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
                     if (!response.ok) {
                         throw new Error('Rating no encontrado');
                     }
@@ -148,8 +160,12 @@
                     return;
                 }
                 try {
+                    const token = localStorage.getItem('jwt-token');
                     const response = await fetch(`http://localhost:8000/rating/${id}`, {
-                        method: 'DELETE'
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
                     });
                     if (!response.ok) {
                         throw new Error('Error al borrar rating');

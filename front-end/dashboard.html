@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - MusicHive</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="/front-end/main.css">
+</head>
+<body>
+    <header>
+        <h1>MusicHive Dashboard</h1>
+        <nav class="nav-auth" style="justify-content: center; margin-top: 1.5rem;">
+            <a href="#" id="logout-btn" class="btn-auth">Cerrar Sesión</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="nav-sections">
+            <section class="nav-section">
+                <h2>Gestión de Música</h2>
+                <ul class="nav-list">
+                    <li><a href="/front-end/music/album.html">Gestión de Álbumes</a></li>
+                    <li><a href="/front-end/music/cancion.html">Gestión de Canciones</a></li>
+                    <li><a href="/front-end/music/artista.html">Gestión de Artistas</a></li>
+                    <li><a href="/front-end/music/genero.html">Gestión de Géneros</a></li>
+                </ul>
+            </section>
+
+            <section class="nav-section" id="gestion-usuarios-section" style="display:none;">
+                <h2>Gestión de Usuarios</h2>
+                <ul class="nav-list">
+                    <li><a href="/front-end/user/usuario.html">Gestión de Usuarios</a></li>
+                    <li><a href="/front-end/user/rating.html">Gestión de Ratings</a></li>
+                    <li><a href="/front-end/user/review.html">Gestión de Reviews</a></li>
+                    <li><a href="/front-end/user/coleccion.html">Gestión de Colecciones</a></li>
+                </ul>
+            </section>
+        </div>
+    </div>
+
+    <script>
+    // Verificar si el usuario está logueado, si no, redirigir a login
+    window.addEventListener('DOMContentLoaded', async () => {
+        const token = localStorage.getItem('jwt-token');
+        console.log("Token encontrado:", !!token);
+        
+        if (!token) {
+            window.location.href = '/front-end/user/login.html';
+            return;
+        }
+
+        // Mostrar sección de admin si corresponde
+        try {
+            console.log("Verificando usuario...");
+            const res = await fetch('http://localhost:8000/auth/me', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            
+            console.log("Respuesta del servidor:", res.status);
+            
+            if (res.ok) {
+                const user = await res.json();
+                console.log("Datos del usuario:", user);
+                console.log("Rol del usuario:", user.rol);
+                
+                if (user.rol && user.rol.toLowerCase() === 'admin') {
+                    console.log("Usuario es admin, mostrando sección de gestión de usuarios");
+                    document.getElementById('gestion-usuarios-section').style.display = 'block';
+                } else {
+                    console.log("Usuario NO es admin");
+                    console.log("Rol encontrado:", user.rol || "No hay rol");
+                }
+            } else { // Si el token no es válido
+                console.log("Token no válido, redirigiendo a login");
+                localStorage.removeItem('jwt-token');
+                window.location.href = '/front-end/user/login.html';
+            }
+        } catch (e) {
+            console.error("Error verificando usuario:", e);
+        }
+    });
+
+    // Funcionalidad de logout
+    document.getElementById('logout-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        localStorage.removeItem('jwt-token');
+        window.location.href = '/';
+    });
+    </script>
+</body>
+</html> 

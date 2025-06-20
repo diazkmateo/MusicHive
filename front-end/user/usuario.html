@@ -14,11 +14,12 @@
         </header>
 
         <div class="container">
-            <a href="/front-end/index.html" class="back-link">← Volver al inicio</a>
+            <a href="/front-end/dashboard.html" class="back-link">← Volver al Dashboard</a>
 
             <section class="usuario-section">
-                <h2>Crear Usuario</h2>
-                <form id="create-usuario-form" class="usuario-form">
+                <h2>Crear/Editar Usuario</h2>
+                <form id="usuario-form" class="usuario-form">
+                    <input type="hidden" id="edit-usuario-id">
                     <div class="form-group">
                         <label for="nombre_usuario">Nombre de Usuario</label>
                         <input type="text" id="nombre_usuario" name="nombre_usuario" required>
@@ -27,7 +28,7 @@
                         <label for="email">Correo Electrónico</label>
                         <input type="email" id="email" name="email" required>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" id="password-group">
                         <label for="contrasena">Contraseña</label>
                         <input type="password" id="contrasena" name="contrasena" required>
                     </div>
@@ -35,159 +36,195 @@
                         <label for="rol_id">Rol</label>
                         <select id="rol_id" name="rol_id" required></select>
                     </div>
-                    <button type="submit">Crear Usuario</button>
+                    <button type="submit" id="submit-button">Crear Usuario</button>
+                    <button type="button" id="cancel-edit-button" style="display:none;" onclick="cancelarEdicion()">Cancelar Edición</button>
                 </form>
             </section>
+            
             <section class="usuario-section">
                 <h2>Usuarios Creados</h2>
                 <div id="usuarios-container" class="ratings-list"></div>
             </section>
-            <section class="usuario-section">
-                <h2>Obtener Usuario</h2>
-                <form id="get-usuario-form" class="usuario-form">
-                    <div class="form-group">
-                        <label for="usuario_id">ID del Usuario</label>
-                        <input type="number" id="usuario_id" name="usuario_id" required>
-                    </div>
-                    <button type="submit">Obtener Usuario</button>
-                </form>
-                <div id="usuario-details" class="rating-details"></div>
-            </section>
         </div>
 
         <script>
-            window.addEventListener('DOMContentLoaded', () => {
-                cargarRoles();
-                cargarUsuarios();
+            let todosLosRoles = [];
+
+            window.addEventListener('DOMContentLoaded', async () => {
+                const token = localStorage.getItem('jwt-token');
+                if (!token) {
+                    window.location.href = '/front-end/user/login.html';
+                    return;
+                }
+                
+                // Redirigir si no es admin
+                const res = await fetch('/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (res.ok) {
+                    const user = await res.json();
+                    if (!user.rol || user.rol.toLowerCase() !== 'admin') {
+                        alert('Acceso denegado');
+                        window.location.href = '/front-end/dashboard.html';
+                    }
+                } else {
+                    window.location.href = '/front-end/user/login.html';
+                }
+
+                await cargarRoles();
+                await cargarUsuarios();
             });
 
             async function cargarRoles() {
-                try {
-                    const response = await fetch('http://localhost:8000/rol/');
-                    if (!response.ok) throw new Error('Error al cargar roles');
-                    const roles = await response.json();
-                    const select = document.getElementById('rol_id');
-                    select.innerHTML = '';
-                    if (roles.length === 0) {
-                        // Si no hay roles en la base, agrego mock
-                        select.innerHTML = `
-                            <option value="1">admin (mock)</option>
-                            <option value="2">normal (mock)</option>
-                        `;
-                    } else {
-                        roles.forEach(rol => {
-                            const option = document.createElement('option');
-                            option.value = rol.id;
-                            option.textContent = rol.nombre_rol;
-                            select.appendChild(option);
-                        });
-                    }
-                } catch (error) {
-                    // Si falla la API, agrego mock
-                    const select = document.getElementById('rol_id');
-                    select.innerHTML = `
-                        <option value="1">admin (mock)</option>
-                        <option value="2">normal (mock)</option>
-                    `;
-                }
+                const response = await fetch('/rol/', { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('jwt-token') } });
+                todosLosRoles = await response.json();
+                const select = document.getElementById('rol_id');
+                select.innerHTML = '';
+                todosLosRoles.forEach(rol => {
+                    const option = document.createElement('option');
+                    option.value = rol.id;
+                    option.textContent = rol.nombre_rol;
+                    select.appendChild(option);
+                });
             }
 
             async function cargarUsuarios() {
-                try {
-                    const response = await fetch('http://localhost:8000/usuario/');
-                    if (!response.ok) throw new Error('Error al cargar usuarios');
-                    const usuarios = await response.json();
-                    const container = document.getElementById('usuarios-container');
-                    container.innerHTML = '';
-                    usuarios.forEach(usuario => addUsuarioToList(usuario));
-                } catch (error) {
-                    alert('Error al cargar usuarios');
-                }
+                const response = await fetch('/usuario/', { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('jwt-token') } });
+                const usuarios = await response.json();
+                const container = document.getElementById('usuarios-container');
+                container.innerHTML = '';
+                usuarios.forEach(usuario => addUsuarioToList(usuario));
             }
 
             function addUsuarioToList(usuario) {
                 const container = document.getElementById('usuarios-container');
                 const usuarioElement = document.createElement('div');
                 usuarioElement.className = 'rating-item';
+
+                // Buscar el nombre del rol
+                const rol = todosLosRoles.find(r => r.id === usuario.rol_id);
+                const nombreRol = rol ? rol.nombre_rol : 'Desconocido';
+
                 usuarioElement.innerHTML = `
                     <div class="rating-header">
                         <h4>${usuario.nombre_usuario}</h4>
-                        <span onclick="borrarUsuario(${usuario.id})" class="delete-x" title="Borrar usuario">×</span>
+                        <div>
+                            <button class="edit-btn" onclick='editarUsuario(${JSON.stringify(usuario)})'>Editar</button>
+                            <span onclick="borrarUsuario(${usuario.id})" class="delete-x" title="Borrar usuario">×</span>
+                        </div>
                     </div>
                     <div class="rating-content">
                         <p><strong>ID:</strong> ${usuario.id}</p>
                         <p><strong>Email:</strong> ${usuario.email}</p>
-                        <p><strong>Rol ID:</strong> ${usuario.rol_id}</p>
+                        <p><strong>Rol:</strong> ${nombreRol}</p>
                     </div>
                 `;
                 container.appendChild(usuarioElement);
             }
+            
+            function editarUsuario(usuario) {
+                document.getElementById('edit-usuario-id').value = usuario.id;
+                document.getElementById('nombre_usuario').value = usuario.nombre_usuario;
+                document.getElementById('email').value = usuario.email;
+                document.getElementById('rol_id').value = usuario.rol_id;
+
+                // Deshabilitar campos que no se editan y ocultar contraseña
+                document.getElementById('nombre_usuario').disabled = true;
+                document.getElementById('email').disabled = true;
+                document.getElementById('password-group').style.display = 'none';
+                document.getElementById('contrasena').required = false;
+
+                document.getElementById('submit-button').textContent = 'Actualizar Rol';
+                document.getElementById('cancel-edit-button').style.display = 'inline-block';
+                window.scrollTo(0, 0); // Subir al formulario
+            }
+
+            function cancelarEdicion() {
+                document.getElementById('usuario-form').reset();
+                document.getElementById('edit-usuario-id').value = '';
+                
+                document.getElementById('nombre_usuario').disabled = false;
+                document.getElementById('email').disabled = false;
+                document.getElementById('password-group').style.display = 'block';
+                document.getElementById('contrasena').required = true;
+
+                document.getElementById('submit-button').textContent = 'Crear Usuario';
+                document.getElementById('cancel-edit-button').style.display = 'none';
+            }
 
             async function borrarUsuario(id) {
                 if (!confirm('¿Estás seguro de que quieres borrar este usuario?')) return;
-                try {
-                    const response = await fetch(`http://localhost:8000/usuario/${id}`, {
-                        method: 'DELETE'
-                    });
-                    if (!response.ok) throw new Error('Error al borrar usuario');
+                const response = await fetch(`/usuario/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('jwt-token') }
+                });
+                if (response.ok) {
                     alert('Usuario borrado exitosamente');
                     cargarUsuarios();
-                } catch (error) {
+                } else {
                     alert('Error al borrar usuario');
                 }
             }
 
-            document.getElementById('create-usuario-form').addEventListener('submit', async function(e) {
+            document.getElementById('usuario-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
-                const formData = {
-                    nombre_usuario: document.getElementById('nombre_usuario').value,
-                    contrasena_hash: document.getElementById('contrasena').value,
-                    email: document.getElementById('email').value,
-                    rol_id: parseInt(document.getElementById('rol_id').value)
-                };
-                try {
-                    const response = await fetch('http://localhost:8000/usuario/', {
+                const editId = document.getElementById('edit-usuario-id').value;
+
+                if (editId) { // Actualizar rol
+                    const payload = { rol_id: parseInt(document.getElementById('rol_id').value) };
+                    const response = await fetch(`/usuario/${editId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + localStorage.getItem('jwt-token')
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.ok) {
+                        alert('Usuario actualizado exitosamente');
+                        cancelarEdicion();
+                        cargarUsuarios();
+                    } else {
+                        alert('Error al actualizar usuario');
+                    }
+                } else { // Crear usuario
+                    const payload = {
+                        nombre_usuario: document.getElementById('nombre_usuario').value,
+                        contrasena_hash: document.getElementById('contrasena').value,
+                        email: document.getElementById('email').value,
+                        rol_id: parseInt(document.getElementById('rol_id').value)
+                    };
+                    const response = await fetch('/usuario/', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + localStorage.getItem('jwt-token')
                         },
-                        body: JSON.stringify(formData)
+                        body: JSON.stringify(payload)
                     });
-                    if (!response.ok) throw new Error('Error al crear usuario');
-                    alert('Usuario creado exitosamente');
-                    document.getElementById('create-usuario-form').reset();
-                    cargarUsuarios();
-                } catch (error) {
-                    alert('Error al crear usuario');
+                    if (response.ok) {
+                        alert('Usuario creado exitosamente');
+                        this.reset();
+                        cargarUsuarios();
+                    } else {
+                        alert('Error al crear usuario');
+                    }
                 }
             });
 
-            document.getElementById('get-usuario-form').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const usuario_id = document.getElementById('usuario_id').value;
-                try {
-                    const response = await fetch(`http://localhost:8000/usuario/${usuario_id}`);
-                    if (!response.ok) throw new Error('Usuario no encontrado');
-                    const usuario = await response.json();
-                    mostrarDetallesUsuario(usuario);
-                } catch (error) {
-                    document.getElementById('usuario-details').innerHTML = '';
-                    alert('Error al obtener usuario');
-                }
-            });
-
-            function mostrarDetallesUsuario(usuario) {
-                const detailsContainer = document.getElementById('usuario-details');
-                detailsContainer.innerHTML = `
-                    <div class="rating-detail-item">
-                        <h4>Detalles del Usuario</h4>
-                        <p><strong>ID:</strong> ${usuario.id}</p>
-                        <p><strong>Nombre de Usuario:</strong> ${usuario.nombre_usuario}</p>
-                        <p><strong>Email:</strong> ${usuario.email}</p>
-                        <p><strong>Rol ID:</strong> ${usuario.rol_id}</p>
-                    </div>
-                `;
-            }
         </script>
+        <style>
+            .edit-btn {
+                padding: 3px 8px;
+                font-size: 0.8rem;
+                margin-right: 10px;
+                background-color: var(--secondary-color);
+                color: white;
+                border: none;
+                border-radius: 3px;
+                cursor: pointer;
+            }
+            .edit-btn:hover {
+                opacity: 0.8;
+            }
+        </style>
     </body>
 </html>

@@ -13,7 +13,7 @@
         </header>
 
         <div class="container">
-            <a href="/front-end/index.html" class="back-link">← Volver al inicio</a>
+            <a href="/front-end/dashboard.html" class="back-link">← Volver al dashboard</a>
 
             <section class="cancion-section">
                 <h2>Crear Canción</h2>
@@ -48,19 +48,25 @@
             </section>
 
             <section class="cancion-section">
-                <h2>Obtener Canción</h2>
+                <h2>Obtener Canción por ID</h2>
                 <form id="get-cancion-form" class="cancion-form">
                     <div class="form-group">
-                        <label for="cancion_id">ID de la Canción</label>
-                        <input type="number" id="cancion_id" name="cancion_id" required>
+                        <label for="get_cancion_id">ID de la Canción</label>
+                        <input type="number" id="get_cancion_id" name="cancion_id" required>
                     </div>
                     <button type="submit">Obtener Canción</button>
                 </form>
-                <div id="cancion-details" class="cancion-details"></div>
+
+                <div id="cancion-details-container" class="cancion-details" style="display: none;">
+                    <h3>Detalles de la Canción</h3>
+                    <div id="cancion-info"></div>
+                </div>
             </section>
         </div>
 
         <script>
+            const token = localStorage.getItem('jwt-token');
+
             // Cargar todas las canciones al iniciar
             window.addEventListener('load', cargarCanciones);
 
@@ -82,10 +88,12 @@
             }
 
             // Función para añadir canción a la lista
-            function addCancionToList(cancion) {
+            async function addCancionToList(cancion) {
                 const container = document.getElementById('canciones-container');
                 const cancionElement = document.createElement('div');
                 cancionElement.className = 'cancion-item';
+                cancionElement.dataset.cancionId = cancion.id;
+                
                 cancionElement.innerHTML = `
                     <div class="cancion-header">
                         <h4>${cancion.nombre_cancion}</h4>
@@ -93,13 +101,41 @@
                     </div>
                     <div class="cancion-content">
                         <p><strong>ID:</strong> ${cancion.id}</p>
-                        <p><strong>Álbum ID:</strong> ${cancion.album_id}</p>
                         <p><strong>Duración:</strong> ${cancion.duracion_segundos} segundos</p>
                         <p><strong>Número de Pista:</strong> ${cancion.numero_pista}</p>
                         ${cancion.album ? `<p><strong>Álbum:</strong> ${cancion.album.nombre_album}</p>` : ''}
                     </div>
+                    <div class="cancion-rating-display">
+                        <span class="avg-rating" id="avg-rating-${cancion.id}">Cargando...</span> 
+                        (<span id="total-ratings-${cancion.id}">-</span> ratings)
+                    </div>
+                    <div class="cancion-rating-input">
+                        <span>Tu puntuación:</span>
+                        <div class="stars" data-cancion-id="${cancion.id}">
+                            ${[1, 2, 3, 4, 5].map(star => `<span class="star" data-value="${star}">★</span>`).join('')}
+                        </div>
+                    </div>
                 `;
                 container.appendChild(cancionElement);
+
+                // Obtener el rating promedio del álbum asociado a esta canción
+                if (cancion.album_id) {
+                    fetchAlbumRating(cancion.album_id, cancion.id);
+                }
+            }
+
+            async function fetchAlbumRating(albumId, cancionId) {
+                try {
+                    const response = await fetch(`http://localhost:8000/rating/album/${albumId}`);
+                    if(response.ok) {
+                        const data = await response.json();
+                        document.getElementById(`avg-rating-${cancionId}`).textContent = `${data.promedio} ★`;
+                        document.getElementById(`total-ratings-${cancionId}`).textContent = data.total_ratings;
+                    }
+                } catch (error) {
+                    console.error(`Error fetching rating for album ${albumId}:`, error);
+                    document.getElementById(`avg-rating-${cancionId}`).textContent = `Error`;
+                }
             }
 
             // Función para crear canción
@@ -116,7 +152,8 @@
                     const response = await fetch('http://localhost:8000/cancion/create', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
                         },
                         body: JSON.stringify(formData)
                     });
@@ -137,7 +174,7 @@
             // Función para obtener canción por ID
             document.getElementById('get-cancion-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
-                const cancion_id = document.getElementById('cancion_id').value;
+                const cancion_id = document.getElementById('get_cancion_id').value;
                 try {
                     const response = await fetch(`http://localhost:8000/cancion/${cancion_id}`);
                     if (!response.ok) {
@@ -154,21 +191,46 @@
 
             // Función para mostrar detalles de la canción
             function mostrarDetallesCancion(cancion) {
-                const detailsContainer = document.getElementById('cancion-details');
-                detailsContainer.innerHTML = `
-                    <div class="cancion-detail-item">
-                        <h4>Detalles de la Canción</h4>
-                        <p><strong>ID:</strong> ${cancion.id}</p>
-                        <p><strong>Nombre:</strong> ${cancion.nombre_cancion}</p>
-                        <p><strong>Álbum ID:</strong> ${cancion.album_id}</p>
-                        <p><strong>Duración:</strong> ${cancion.duracion_segundos} segundos</p>
-                        <p><strong>Número de Pista:</strong> ${cancion.numero_pista}</p>
-                        ${cancion.album ? `
-                            <h5>Información del Álbum:</h5>
-                            <p><strong>Nombre:</strong> ${cancion.album.nombre_album}</p>
-                        ` : ''}
+                const detailsContainer = document.getElementById('cancion-details-container');
+                const infoContainer = document.getElementById('cancion-info');
+                
+                infoContainer.innerHTML = `
+                    <div class="cancion-item">
+                        <div class="cancion-header"><h4>${cancion.nombre_cancion}</h4></div>
+                        <div class="cancion-content">
+                            <p><strong>ID:</strong> ${cancion.id}</p>
+                            <p><strong>Duración:</strong> ${cancion.duracion_segundos} segundos</p>
+                            <p><strong>Número de Pista:</strong> ${cancion.numero_pista}</p>
+                            ${cancion.album ? `<p><strong>Álbum:</strong> ${cancion.album.nombre_album}</p>` : ''}
+                        </div>
+                        <div class="cancion-rating-display">
+                            <span class="avg-rating" id="avg-rating-details-${cancion.id}">Cargando...</span> 
+                            (<span id="total-ratings-details-${cancion.id}">-</span> ratings)
+                        </div>
                     </div>
                 `;
+                
+                // Mostrar el contenedor de detalles
+                detailsContainer.style.display = 'block';
+
+                // Obtener el rating del álbum asociado a esta canción
+                if (cancion.album_id) {
+                    fetchSingleAlbumRating(cancion.album_id, cancion.id);
+                }
+            }
+
+            async function fetchSingleAlbumRating(albumId, cancionId) {
+                try {
+                    const response = await fetch(`http://localhost:8000/rating/album/${albumId}`);
+                    if(response.ok) {
+                        const data = await response.json();
+                        document.getElementById(`avg-rating-details-${cancionId}`).textContent = `${data.promedio} ★`;
+                        document.getElementById(`total-ratings-details-${cancionId}`).textContent = data.total_ratings;
+                    }
+                } catch (error) {
+                    console.error(`Error fetching rating for album ${albumId}:`, error);
+                    document.getElementById(`avg-rating-details-${cancionId}`).textContent = `Error`;
+                }
             }
 
             // Función para borrar canción
@@ -179,7 +241,8 @@
 
                 try {
                     const response = await fetch(`http://localhost:8000/cancion/${id}`, {
-                        method: 'DELETE'
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
                     });
 
                     if (!response.ok) {
@@ -191,6 +254,55 @@
                 } catch (error) {
                     console.error('Error:', error);
                     alert('Error al borrar canción');
+                }
+            }
+
+            // Event listener para ratings
+            document.getElementById('canciones-container').addEventListener('click', function(e) {
+                if (e.target.classList.contains('star')) {
+                    if (!token) {
+                        alert("Debes iniciar sesión para puntuar.");
+                        window.location.href = '/front-end/user/login.html';
+                        return;
+                    }
+                    const cancionId = e.target.parentElement.dataset.cancionId;
+                    const puntuacion = e.target.dataset.value;
+                    // Por ahora, puntuamos el álbum asociado a la canción
+                    submitAlbumRating(cancionId, puntuacion);
+                }
+            });
+
+            async function submitAlbumRating(cancionId, puntuacion) {
+                try {
+                    // Primero necesitamos obtener el álbum_id de la canción
+                    const cancionResponse = await fetch(`http://localhost:8000/cancion/${cancionId}`);
+                    if (!cancionResponse.ok) {
+                        throw new Error('No se pudo obtener la información de la canción');
+                    }
+                    const cancion = await cancionResponse.json();
+                    
+                    const response = await fetch('http://localhost:8000/rating/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ 
+                            album_id: parseInt(cancion.album_id), 
+                            puntuacion: parseInt(puntuacion) 
+                        })
+                    });
+
+                    if (response.ok) {
+                        await fetchAlbumRating(cancion.album_id, cancionId); // Actualizar el rating promedio
+                        alert('¡Puntuación guardada!');
+                    } else {
+                        const error = await response.json();
+                        alert('Error al guardar la puntuación: ' + (error.detail || 'Error desconocido'));
+                    }
+                } catch(error) {
+                    console.error('Error al puntuar:', error);
+                    alert('Error al guardar la puntuación.');
                 }
             }
         </script>

@@ -9,45 +9,27 @@
     <body>
         <header>
             <h1>MusicHive</h1>
+            <nav class="nav-auth" style="justify-content: center; margin-top: 1.5rem;">
+                <a href="/front-end/user/login.html" class="btn-auth">Iniciar Sesión</a>
+                <a href="/front-end/user/register.html" class="btn-auth">Registrarse</a>
+            </nav>
         </header>
 
         <div class="container">
-            <section class="login-section">
-                <h2>Iniciar Sesión</h2>
-                <form action="/login" method="post">
-                    <div class="form-group">
-                        <label for="username">Usuario</label>
-                        <input type="text" id="username" name="username" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="password">Contraseña</label>
-                        <input type="password" id="password" name="password" required>
-                    </div>
-                    <button type="submit">Entrar</button>
-                </form>
+            <section class="welcome-section">
+                <h2>Bienvenido a MusicHive</h2>
+                <p>Tu colmena personal para explorar, organizar y disfrutar de la música. Descubre nuevos álbumes, califica tus favoritos, escribe reseñas y cura tus propias colecciones de canciones. ¡Sumérgete en el universo musical y compártelo con otros!</p>
             </section>
-
-            <div class="nav-sections">
-                <section class="nav-section">
-                    <h2>Gestión de Música</h2>
-                    <ul class="nav-list">
-                        <li><a href="/front-end/music/album.html">Gestión de Álbumes</a></li>
-                        <li><a href="/front-end/music/cancion.html">Gestión de Canciones</a></li>
-                        <li><a href="/front-end/music/artista.html">Gestión de Artistas</a></li>
-                        <li><a href="/front-end/music/genero.html">Gestión de Géneros</a></li>
-                    </ul>
-                </section>
-
-                <section class="nav-section">
-                    <h2>Gestión de Usuarios</h2>
-                    <ul class="nav-list">
-                        <li><a href="/front-end/user/usuario.html">Gestión de Usuarios</a></li>
-                        <li><a href="/front-end/user/rating.html">Gestión de Ratings</a></li>
-                        <li><a href="/front-end/user/review.html">Gestión de Reviews</a></li>
-                        <li><a href="/front-end/user/coleccion.html">Gestión de Colecciones</a></li>
-                    </ul>
-                </section>
-            </div>
         </div>
+
+        <script>
+        // Si el usuario ya está logueado, redirigir al dashboard
+        window.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                window.location.href = '/front-end/dashboard.html';
+            }
+        });
+        </script>
     </body>
 </html>

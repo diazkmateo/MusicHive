@@ -13,7 +13,7 @@
         </header>
 
         <div class="container">
-            <a href="/front-end/index.html" class="back-link">← Volver al inicio</a>
+            <a href="/front-end/dashboard.html" class="back-link">← Volver al dashboard</a>
 
             <section class="album-section">
                 <h2>Crear Álbum</h2>
@@ -48,31 +48,40 @@
             </section>
 
             <section class="album-section">
-                <h2>Obtener Álbum</h2>
+                <h2>Obtener Álbum por ID</h2>
                 <form id="get-album-form" class="album-form">
                     <div class="form-group">
-                        <label for="album_id">ID del Álbum</label>
-                        <input type="number" id="album_id" name="album_id" required>
+                        <label for="get_album_id">ID del Álbum</label>
+                        <input type="number" id="get_album_id" name="album_id" required>
                     </div>
                     <button type="submit">Obtener Álbum</button>
                 </form>
 
-                <div id="album-details" class="album-details">
+                <div id="album-details-container" class="album-details" style="display: none;">
                     <h3>Detalles del Álbum</h3>
                     <div id="album-info"></div>
                 </div>
             </section>
+
         </div>
 
         <script>
-            // Función para cargar todos los álbumes
+            // No leemos el token aquí para asegurar que siempre esté actualizado.
+
+            // Redirigir si no hay token no es ideal aquí, mejor lo manejamos en la acción.
+            /*
+            if (!localStorage.getItem('jwt-token')) {
+                console.warn("No hay token, algunas funcionalidades estarán deshabilitadas.");
+            }
+            */
+            
             async function cargarAlbumes() {
                 try {
                     const response = await fetch('http://localhost:8000/album/');
                     if (response.ok) {
                         const albums = await response.json();
                         const container = document.getElementById('albums-container');
-                        container.innerHTML = ''; // Limpiar contenedor
+                        container.innerHTML = '';
                         albums.forEach(album => addAlbumToList(album));
                     } else {
                         console.error('Error al cargar álbumes');
@@ -82,10 +91,8 @@
                 }
             }
 
-            // Cargar álbumes al inicio
             window.addEventListener('load', cargarAlbumes);
-
-            // Función para crear un álbum
+            
             document.getElementById('create-album-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
@@ -97,18 +104,18 @@
                 };
 
                 try {
+                    const token = localStorage.getItem('jwt-token'); // Obtener token fresco
                     const response = await fetch('http://localhost:8000/album/create', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
                         },
                         body: JSON.stringify(formData)
                     });
 
                     if (response.ok) {
-                        // Limpiar el formulario
                         this.reset();
-                        // Recargar todos los álbumes
                         await cargarAlbumes();
                     } else {
                         const error = await response.json();
@@ -119,12 +126,12 @@
                     alert('Error al crear el álbum');
                 }
             });
-
-            // Función para obtener un álbum
+            
+            // Event listener para el formulario de obtener álbum
             document.getElementById('get-album-form').addEventListener('submit', async function(e) {
-                e.preventDefault();
+                e.preventDefault(); // ¡Esto evita que la página se recargue!
                 
-                const albumId = document.getElementById('album_id').value;
+                const albumId = document.getElementById('get_album_id').value;
 
                 try {
                     const response = await fetch(`http://localhost:8000/album/${albumId}`);
@@ -134,7 +141,8 @@
                         displayAlbumDetails(album);
                     } else {
                         const error = await response.json();
-                        alert('Error al obtener el álbum: ' + (error.detail || 'Error desconocido'));
+                        alert('Error al obtener el álbum: ' + (error.detail || 'Álbum no encontrado'));
+                        document.getElementById('album-details-container').style.display = 'none';
                     }
                 } catch (error) {
                     console.error('Error:', error);
@@ -142,11 +150,53 @@
                 }
             });
 
-            // Función para agregar un álbum a la lista
-            function addAlbumToList(album) {
+            function displayAlbumDetails(album) {
+                const container = document.getElementById('album-info');
+                const detailsContainer = document.getElementById('album-details-container');
+                
+                container.innerHTML = `
+                    <div class="album-item">
+                        <div class="album-header"><h4>${album.nombre_album}</h4></div>
+                        <div class="album-content">
+                            <p>ID: ${album.id}</p>
+                            ${album.artista ? `<p>Artista: ${album.artista.nombre_artista}</p>` : ''}
+                            ${album.genero ? `<p>Género: ${album.genero.nombre_genero}</p>` : ''}
+                            ${album.fecha_salida_album ? `<p>Fecha: ${album.fecha_salida_album}</p>` : ''}
+                        </div>
+                        <div class="album-rating-display">
+                            <span class="avg-rating" id="avg-rating-details-${album.id}">Cargando...</span> 
+                            (<span id="total-ratings-details-${album.id}">-</span> ratings)
+                        </div>
+                    </div>
+                `;
+                
+                // Mostrar el contenedor de detalles
+                detailsContainer.style.display = 'block';
+
+                // Usamos una función separada para obtener el rating de este álbum específico
+                fetchSingleAlbumRating(album.id);
+            }
+
+            async function fetchSingleAlbumRating(albumId) {
+                try {
+                    const response = await fetch(`http://localhost:8000/rating/album/${albumId}`);
+                    if(response.ok) {
+                        const data = await response.json();
+                        document.getElementById(`avg-rating-details-${albumId}`).textContent = `${data.promedio} ★`;
+                        document.getElementById(`total-ratings-details-${albumId}`).textContent = data.total_ratings;
+                    }
+                } catch (error) {
+                    console.error(`Error fetching rating for album ${albumId}:`, error);
+                    document.getElementById(`avg-rating-details-${albumId}`).textContent = `Error`;
+                }
+            }
+
+            async function addAlbumToList(album) {
                 const container = document.getElementById('albums-container');
                 const albumElement = document.createElement('div');
                 albumElement.className = 'album-item';
+                albumElement.dataset.albumId = album.id;
+                
                 albumElement.innerHTML = `
                     <div class="album-header">
                         <h4>${album.nombre_album}</h4>
@@ -154,29 +204,51 @@
                     </div>
                     <div class="album-content">
                         <p>ID: ${album.id}</p>
-                        <p>Artista ID: ${album.artista_id}</p>
-                        ${album.genero_id ? `<p>Género ID: ${album.genero_id}</p>` : ''}
-                        ${album.fecha_salida_album ? `<p>Fecha: ${album.fecha_salida_album}</p>` : ''}
                         ${album.artista ? `<p>Artista: ${album.artista.nombre_artista}</p>` : ''}
                         ${album.genero ? `<p>Género: ${album.genero.nombre_genero}</p>` : ''}
+                        ${album.fecha_salida_album ? `<p>Fecha: ${album.fecha_salida_album}</p>` : ''}
+                    </div>
+                    <div class="album-rating-display">
+                        <span class="avg-rating" id="avg-rating-${album.id}">Cargando...</span> 
+                        (<span id="total-ratings-${album.id}">-</span> ratings)
+                    </div>
+                    <div class="album-rating-input">
+                        <span>Tu puntuación:</span>
+                        <div class="stars" data-album-id="${album.id}">
+                            ${[1, 2, 3, 4, 5].map(star => `<span class="star" data-value="${star}">★</span>`).join('')}
+                        </div>
                     </div>
                 `;
                 container.appendChild(albumElement);
+
+                // Obtener el rating promedio del álbum
+                fetchAlbumRating(album.id);
             }
 
-            // Función para borrar un álbum
-            async function borrarAlbum(albumId) {
-                if (!confirm('¿Estás seguro de que quieres borrar este álbum?')) {
-                    return;
+            async function fetchAlbumRating(albumId) {
+                try {
+                    const response = await fetch(`http://localhost:8000/rating/album/${albumId}`);
+                    if(response.ok) {
+                        const data = await response.json();
+                        document.getElementById(`avg-rating-${albumId}`).textContent = `${data.promedio} ★`;
+                        document.getElementById(`total-ratings-${albumId}`).textContent = data.total_ratings;
+                    }
+                } catch (error) {
+                    console.error(`Error fetching rating for album ${albumId}:`, error);
+                    document.getElementById(`avg-rating-${albumId}`).textContent = `Error`;
                 }
+            }
+
+            async function borrarAlbum(albumId) {
+                if (!confirm('¿Estás seguro de que quieres borrar este álbum?')) return;
 
                 try {
+                    const token = localStorage.getItem('jwt-token'); // Obtener token fresco
                     const response = await fetch(`http://localhost:8000/album/${albumId}`, {
-                        method: 'DELETE'
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
                     });
-
                     if (response.ok) {
-                        // Recargar la lista de álbumes
                         await cargarAlbumes();
                     } else {
                         const error = await response.json();
@@ -188,20 +260,43 @@
                 }
             }
 
-            // Función para mostrar los detalles de un álbum
-            function displayAlbumDetails(album) {
-                const container = document.getElementById('album-info');
-                container.innerHTML = `
-                    <div class="album-detail-item">
-                        <h4>${album.nombre_album}</h4>
-                        <p>ID: ${album.id}</p>
-                        <p>Artista ID: ${album.artista_id}</p>
-                        ${album.genero_id ? `<p>Género ID: ${album.genero_id}</p>` : ''}
-                        ${album.fecha_salida_album ? `<p>Fecha: ${album.fecha_salida_album}</p>` : ''}
-                        ${album.artista ? `<p>Artista: ${album.artista.nombre_artista}</p>` : ''}
-                        ${album.genero ? `<p>Género: ${album.genero.nombre_genero}</p>` : ''}
-                    </div>
-                `;
+            document.getElementById('albums-container').addEventListener('click', function(e) {
+                if (e.target.classList.contains('star')) {
+                    const token = localStorage.getItem('jwt-token'); // Obtener token fresco
+                    if (!token) {
+                        alert("Debes iniciar sesión para puntuar.");
+                        window.location.href = '/front-end/user/login.html';
+                        return;
+                    }
+                    const albumId = e.target.parentElement.dataset.albumId;
+                    const puntuacion = e.target.dataset.value;
+                    submitRating(albumId, puntuacion);
+                }
+            });
+
+            async function submitRating(albumId, puntuacion) {
+                try {
+                    const token = localStorage.getItem('jwt-token'); // Obtener token fresco
+                    const response = await fetch('http://localhost:8000/rating/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ album_id: parseInt(albumId), puntuacion: parseInt(puntuacion) })
+                    });
+
+                    if (response.ok) {
+                        await fetchAlbumRating(albumId); // Actualizar el rating promedio
+                        alert('¡Puntuación guardada!');
+                    } else {
+                        const error = await response.json();
+                        alert('Error al guardar la puntuación: ' + (error.detail || 'Error desconocido'));
+                    }
+                } catch(error) {
+                    console.error('Error al puntuar:', error);
+                    alert('Error al guardar la puntuación.');
+                }
             }
         </script>
     </body>
