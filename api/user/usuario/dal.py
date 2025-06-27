@@ -4,17 +4,24 @@ from sqlalchemy.orm import selectinload
 import models
 from user.usuario import schemas
 from passlib.context import CryptContext
+from fastapi import HTTPException
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 async def create_usuario(db: AsyncSession, usuario) -> models.Usuario:
-    # usuario puede ser UsuarioCreateRequest o UsuarioRegisterRequest
+    # Buscar el rol "usuario" en la base
+    result = await db.execute(select(models.Rol).where(models.Rol.nombre_rol == "usuario"))
+    rol_usuario = result.scalar_one_or_none()
+    if rol_usuario is None:
+        raise HTTPException(status_code=400, detail="Rol 'usuario' no encontrado")
+
     hashed_password = pwd_context.hash(usuario.contrasena if hasattr(usuario, 'contrasena') else usuario.contrasena_hash)
+    
     nuevo_usuario = models.Usuario(
         nombre_usuario=usuario.nombre_usuario,
         contrasena_hash=hashed_password,
         email=usuario.email,
-        rol_id=usuario.rol_id
+        rol_id=rol_usuario.id  # Asigna siempre rol "usuario"
     )
     db.add(nuevo_usuario)
     await db.commit()
